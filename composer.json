@@ -1,0 +1,21 @@
+{
+  "name": "tbollmeier/parsian",
+  "version": "0.2.0",
+  "description": "A library to support parser development",
+  "minimum-stability": "stable",
+  "license": "Apache 2-0",
+  "authors": [
+    {
+      "name": "Thomas Bollmeier",
+      "email": "entwickler@tbollmeier.de"
+    }
+  ],
+  "require": {
+    "php": "^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "tbollmeier\\parsian\\": "src/"
+    }
+  }
+}
