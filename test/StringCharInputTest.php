@@ -6,7 +6,7 @@ use tbollmeier\parsian\StringCharInput;
 
 class StringCharInputTest extends TestCase
 {
-    public function testCanBeNegated()
+    public function testCharInput()
     {
         $input = new StringCharInput("Just\ntesting");
 
