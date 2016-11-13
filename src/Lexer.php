@@ -61,9 +61,9 @@ class Lexer
         $this->keywords[] = $seq;
     }
 
-    public function addTerminal(string $regex, string $name)
+    public function addTerminal(string $pattern, string $name)
     {
-        $this->terminals[] = [$regex, $name];
+        $this->terminals[] = [$pattern, $name];
     }
 
     private function adjustBufSize(string $seq)

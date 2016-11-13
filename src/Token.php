@@ -22,7 +22,7 @@ class Token
     /**
      * @return int
      */
-    public function getType(): int
+    public function getType(): string
     {
         return $this->type;
     }
@@ -48,7 +48,7 @@ class Token
     private $startPos;
     private $endPos;
 
-    public function __construct(string $content, int $type, Position $start, Position $end)
+    public function __construct(string $content, string $type, Position $start, Position $end)
     {
         $this->content = $content;
         $this->type = $type;
