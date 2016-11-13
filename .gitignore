@@ -1,2 +1,3 @@
 .idea
-vendorcomposer.lock
+composer.lock
+vendor
