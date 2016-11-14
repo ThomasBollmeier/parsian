@@ -155,7 +155,7 @@ class TokenInputImpl implements TokenInput
                     if ($this->startsWith($content, $this->endSeq)) {
 
                         $charInfos = array_merge($charInfos, $this->consume(strlen($this->endSeq)));
-                        $this->tokens[] = $this->createToken($charInfos, "string_literal");
+                        $this->tokens[] = $this->createToken($charInfos, "STRING");
                         $charInfos = [];
                         $mode = self::MODE_NORMAL;
                         $this->endSeq = null;
@@ -247,7 +247,7 @@ class TokenInputImpl implements TokenInput
 
         foreach ($this->keywords as $kw) {
             if ($kw === $content) {
-                $type = "key_{$kw}";
+                $type = strtoupper($kw);
                 $found = true;
                 break;
             }
