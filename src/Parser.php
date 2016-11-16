@@ -44,7 +44,8 @@ class Parser
         $this->fillBuffer();
 
         $tokens = [];
-        for ($i=0; $i<$n; $i++) {
+        $size = min($n, count($this->tokens));
+        for ($i=0; $i<$size; $i++) {
             $tokens[] = $this->tokens[$i];
         }
 
@@ -67,9 +68,9 @@ class Parser
     public function consumeMany($n)
     {
         $consumed = $this->lookup($n);
-        $n = count($consumed);
+        $cnt = count($consumed);
 
-        for ($i=0; $i<$n; $i++) {
+        for ($i=0; $i<$cnt; $i++) {
             array_shift($this->tokens);
         }
 
