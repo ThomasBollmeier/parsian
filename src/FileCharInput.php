@@ -18,47 +18,50 @@ limitations under the License.
 namespace tbollmeier\parsian;
 
 
-class StringCharInput implements CharInput
+class FileCharInput implements CharInput
 {
-
-    private $text;
-    private $pos;
+    private $filePath;
+    private $fp;
     private $line_;
     private $col;
 
-    public function __construct(string $text)
+    public function __construct(string $filePath)
     {
-        $this->text = $text;
-        $this->pos = 0;
+        $this->filePath = $filePath;
+        $this->fp = null;
         $this->line_ = 1;
         $this->col = 1;
     }
 
     function open()
     {
+        $this->fp = fopen($this->filePath, "r");
     }
 
     function close()
     {
+        if ($this->fp !== null) {
+            fclose($this->fp);
+            $this->fp = null;
+        }
     }
 
     function hasMoreChars() : bool
     {
-        return $this->pos < strlen($this->text);
+        return !feof($this->fp);
     }
 
     function nextChar() : string
     {
-        $char = $this->text[$this->pos];
-        $this->pos++;
-        if ($char !== PHP_EOL) {
+        $ch = fgetc($this->fp);
+        if ($ch !== PHP_EOL) {
             $this->col += 1;
         } else {
             $this->col = 1;
             $this->line_++;
         }
 
-        return $char;
+        return $ch;
     }
 
     function line() : int

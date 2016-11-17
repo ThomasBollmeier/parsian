@@ -1,10 +1,19 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: drbolle
- * Date: 11/15/16
- * Time: 7:24 PM
- */
+/*
+Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 namespace tbollmeier\parsian;
 
@@ -32,10 +41,17 @@ class Parser
         $this->tokenIn->close();
     }
 
+    public function lookup()
+    {
+        $tokens = $this->lookupMany(1);
+
+        return !empty($tokens) ? $tokens[0] : false;
+    }
+
     /** lookup next n tokens
      *
      */
-    public function lookup($n = 1)
+    public function lookupMany($n = 1)
     {
         if ($n > $this->bufSize) {
             $this->bufSize = $n;
@@ -67,7 +83,7 @@ class Parser
 
     public function consumeMany($n)
     {
-        $consumed = $this->lookup($n);
+        $consumed = $this->lookupMany($n);
         $cnt = count($consumed);
 
         for ($i=0; $i<$cnt; $i++) {
