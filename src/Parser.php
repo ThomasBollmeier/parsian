@@ -48,6 +48,17 @@ class Parser
         return !empty($tokens) ? $tokens[0] : false;
     }
 
+    public function expect($tokenType)
+    {
+        $token = $this->lookup();
+        if ($token && $token->getType() === $tokenType) {
+            $this->parser->consume();
+            return $token;
+        } else {
+            throw new \Exception("Expected token not found");
+        }
+    }
+
     /** lookup next n tokens
      *
      */
