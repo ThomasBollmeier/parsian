@@ -48,14 +48,41 @@ class Parser
         return !empty($tokens) ? $tokens[0] : false;
     }
 
-    public function expect($tokenType)
+    public function checkFor(...$expectedTokenTypes)
     {
-        $token = $this->lookup();
-        if ($token && $token->getType() === $tokenType) {
-            $this->consume();
-            return $token;
+        $numExpected = count($expectedTokenTypes);
+        
+        $actualTokens = $this->lookupMany($numExpected);
+        $numActual = count($actualTokens);
+        
+        if ($numActual === $numExpected) {
+            for ($i=0; $i<$numActual; $i++) {
+                $actualToken = $actualTokens[$i];
+                $expectedTokenType = $expectedTokenTypes[$i];
+                if ($actualToken->getType() !== $expectedTokenType) {
+                    return false;        
+                }
+            }
+
+            return $actualTokens;
+
         } else {
-            throw new \Exception("Expected token not found");
+            return false;
+        }
+
+    }
+
+    public function consumeExpected(...$expectedTokenTypes) 
+    {
+        $actualTokens = call_user_func_array([$this, "expect"], $expectedTokenTypes);
+        if ($actualTokens !== false) {
+            $cnt = count($actualTokens);
+            for ($i=0; $i<$cnt; $i++) {
+                array_shift($this->tokens);
+            }
+            return $actualTokens;
+        } else {
+            return false;
         }
     }
 
