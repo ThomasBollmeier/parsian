@@ -82,7 +82,7 @@ class Parser
             }
             return $actualTokens;
         } else {
-            return false;
+            throw new Exception("Parsing error");
         }
     }
 
