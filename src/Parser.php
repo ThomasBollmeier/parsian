@@ -74,7 +74,7 @@ class Parser
 
     public function consumeExpected(...$expectedTokenTypes) 
     {
-        $actualTokens = call_user_func_array([$this, "expect"], $expectedTokenTypes);
+        $actualTokens = call_user_func_array([$this, "checkFor"], $expectedTokenTypes);
         if ($actualTokens !== false) {
             $cnt = count($actualTokens);
             for ($i=0; $i<$cnt; $i++) {
