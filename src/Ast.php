@@ -21,6 +21,9 @@ namespace tbollmeier\parsian;
 class Ast
 {
     private $name;
+    private $text;
+    private $parent;
+    private $children;
 
     /**
      * @return string
@@ -54,9 +57,6 @@ class Ast
         return $this->children;
     }
 
-    private $text;
-    private $parent;
-    private $children;
 
     public function __construct(string $name, string $text="")
     {
@@ -70,6 +70,29 @@ class Ast
     {
         $this->children[] = $child;
         $child->parent = $this;
+    }
+
+    public function toXml()
+    {
+        $xml = "<{$this->name}";
+        if (empty($this->text) && empty($this->children)) {
+            $xml .= " />";
+            return $xml;
+        }
+
+        $xml .= ">";
+
+        if (!empty($this->text)) {
+            $xml .= $this->text;
+        }
+
+        foreach ($this->children as $child) {
+            $xml .= $child->toXml();
+        }
+
+        $xml .= "</{$this->name}>";
+
+        return $xml;
     }
 
 }
