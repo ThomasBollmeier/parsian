@@ -59,7 +59,7 @@ class Parser
             for ($i=0; $i<$numActual; $i++) {
                 $actualToken = $actualTokens[$i];
                 $expectedTokenType = $expectedTokenTypes[$i];
-                if ($actualToken->getType() !== $expectedTokenType) {
+                if (!$this->matches($actualToken, $expectedTokenType)) {
                     return false;        
                 }
             }
@@ -70,6 +70,15 @@ class Parser
             return false;
         }
 
+    }
+
+    private function matches(Token $actToken, $expType)
+    {
+        if (!is_array($expType)) {
+            return $actToken->getType() == $expType; 
+        } else {
+            return array_search($actToken->getType(), $expType) !== false;
+        }
     }
 
     public function consumeExpected(...$expectedTokenTypes) 
