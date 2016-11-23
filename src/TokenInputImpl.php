@@ -139,9 +139,12 @@ class TokenInputImpl implements TokenInput
 
                         } else if ($this->isWSChar($content[0])) {
 
-                            // Whitespace found => stop the token search for now
-                            $this->addToTokens($charInfos);
-                            $done = true;
+                            $this->consume(1);
+                            if (!empty($charInfos)) {
+                                // Whitespace found => stop the token search for now
+                                $this->addToTokens($charInfos);
+                                $done = true;
+                            }
 
                         } else {
 
