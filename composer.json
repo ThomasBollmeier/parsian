@@ -1,6 +1,6 @@
 {
   "name": "tbollmeier/parsian",
-  "version": "0.4.1",
+  "version": "0.98.0",
   "description": "A library to support parser development",
   "minimum-stability": "stable",
   "license": "Apache 2-0",
