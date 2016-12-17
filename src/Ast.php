@@ -24,6 +24,7 @@ class Ast
     private $text;
     private $parent;
     private $children;
+    private $attrs;
 
     /**
      * @return string
@@ -39,6 +40,11 @@ class Ast
     public function getText(): string
     {
         return $this->text;
+    }
+
+    public function setText(string $text)
+    {
+        $this->text = $text;
     }
 
     /**
@@ -57,6 +63,27 @@ class Ast
         return $this->children;
     }
 
+    /**
+     * @return array
+     */
+    public function getAttrs(): array
+    {
+        return $this->attrs;
+    }
+
+    public function getAttr($key) : string
+    {
+        return $this->attrs[$key];
+    }
+
+    /**
+     * @param array $attrs
+     */
+    public function setAttr(string $key, string $value)
+    {
+        $this->attrs[$key] = $value;
+    }
+
 
     public function __construct(string $name, string $text="")
     {
@@ -64,6 +91,7 @@ class Ast
         $this->text = $text;
         $this->parent = null;
         $this->children = [];
+        $this->attrs = [];
     }
 
     public function addChild(Ast $child)
@@ -75,6 +103,11 @@ class Ast
     public function toXml()
     {
         $xml = "<{$this->name}";
+
+        foreach ($this->attrs as $key => $value) {
+            $xml .= " $key=\"$value\"";
+        }
+
         if (empty($this->text) && empty($this->children)) {
             $xml .= " />";
             return $xml;
