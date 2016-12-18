@@ -28,11 +28,13 @@ class ParserTest extends TestCase
 -- Tokens:
 
 ID = /[a-z][a-z0-9-\?]*/;
-
+AND = /&&/;
+OR = /||/;
 
 -- Rules:
 
-boolean_expr = conjunction 'OR' boolean_expr; 
+boolean_expr = conjunction (OR boolean_expr)*; 
+
 
 
 GRAMMAR;
@@ -42,7 +44,7 @@ GRAMMAR;
 
 
         $this->assertNotNull($ast);
-        $this->assertEquals(2, count($ast->getChildren()));
+        $this->assertEquals(4, count($ast->getChildren()));
 
         print ($ast->toXml());
 

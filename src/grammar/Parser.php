@@ -187,16 +187,46 @@ class Parser
     {
         $elemAst = $this->ruleId($parser);
         if ($elemAst !== false) {
-            return $elemAst;
+            return $this->multChecked($elemAst, $parser);
         }
 
         $elemAst = $this->keyword($parser);
         if ($elemAst !== false) {
-            return $elemAst;
+            return $this->multChecked($elemAst, $parser);
+        }
+
+        $elemAst = $this->group($parser);
+        if ($elemAst !== false) {
+            return $this->multChecked($elemAst, $parser);
+        }
+
+        $elemAst = $this->tokenId($parser);
+        if ($elemAst !== false) {
+            return $this->multChecked($elemAst, $parser);
         }
 
         return false;
 
+    }
+
+    private function multChecked(pars\Ast $elemAst, pars\Parser $parser)
+    {
+        $mult = $this->multiplicity($parser);
+        if ($mult !== false) {
+            switch ($mult) {
+                case self::MULT_ZERO_TO_ONE:
+                    $elemAst->setAttr("mult", "zero_to_one");
+                    break;
+                case self::MULT_MANY:
+                    $elemAst->setAttr("mult", "many");
+                    break;
+                case self::MULT_ONE_TO_MANY:
+                    $elemAst->setAttr("mult", "one_to_many");
+                    break;
+            }
+        }
+
+        return $elemAst;
     }
 
     private function ruleId(pars\Parser $parser)
@@ -232,6 +262,80 @@ class Parser
             return false;
 
         }
+    }
+
+    private function group(pars\Parser $parser)
+    {
+        try {
+
+            $parser->consumeExpected(self::PAR_OPEN);
+
+            $groupAst = new pars\Ast("group");
+            $branches = $this->branches($parser);
+            if (empty($branches)) {
+                return false;
+            }
+
+            foreach ($branches as $branch) {
+                $groupAst->addChild($branch);
+            }
+
+            $parser->consumeExpected(self::PAR_CLOSE);
+
+            return $groupAst;
+
+        } catch (\Exception $error) {
+            return false;
+        }
+    }
+
+    private function tokenId(pars\Parser $parser)
+    {
+        try {
+
+            $tokenIds = $parser->consumeExpected(self::TOKEN_ID);
+            if (empty($tokenIds)) {
+                return false;
+            }
+            $tokenIdAst = new pars\Ast("token_id");
+            $tokenIdAst->setAttr("name", $tokenIds[0]->getContent());
+
+            return $tokenIdAst;
+
+        } catch (\Exception $error) {
+            return false;
+        }
+    }
+
+    const MULT_ZERO_TO_ONE = 1;
+    const MULT_MANY = 2;
+    const MULT_ONE_TO_MANY = 3;
+
+    private function multiplicity(pars\Parser $parser)
+    {
+        try {
+
+            $tokens = $parser->consumeExpected([
+                self::QUESTION_MARK,
+                self::ASTERISK,
+                self::PLUS
+            ]);
+
+            switch ($tokens[0]->getType()) {
+                case self::QUESTION_MARK:
+                    return self::MULT_ZERO_TO_ONE;
+                case self::ASTERISK:
+                    return self::MULT_MANY;
+                case self::PLUS:
+                    return self::MULT_ONE_TO_MANY;
+                default:
+                    return false;
+            }
+
+        } catch (\Exception $error) {
+            return false;
+        }
+
     }
 
     private function createLexer()
