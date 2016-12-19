@@ -27,13 +27,13 @@ class ParserTest extends TestCase
 
 -- Tokens:
 
-ID = /[a-z][a-z0-9-\?]*/;
-AND = /&&/;
-OR = /||/;
+token ID /[a-z][a-z0-9-\?]*/;
+symbol AND '&&';
+symbol OR '||';
 
 -- Rules:
 
-boolean_expr = conjunction (OR boolean_expr)*; 
+boolean_expr -> conjunction (OR boolean_expr)*; 
 
 
 

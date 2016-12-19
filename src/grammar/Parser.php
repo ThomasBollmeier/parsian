@@ -30,11 +30,13 @@ class Parser
     const PLUS = "PLUS";
     const QUESTION_MARK = "QUESTION_MARK";
     const SEMICOLON = "SEMICOLON";
-    const ASSIGN = "ASSIGN";
+    const ARROW = "ARROW";
     const AT = "AT";
     const TOKEN_ID = "TOKEN_ID";
     const ID = "ID";
     const STRING = "STRING";
+    const TOKEN = "TOKEN";
+    const SYMBOL = "SYMBOL";
 
 
     public function __construct()
@@ -70,7 +72,7 @@ class Parser
 
         while (true) {
 
-            $token = $this->token($parser);
+            $token = $this->tokenOrSymbol($parser);
             if ( $token !== false) {
                 $grammar->addChild($token);
                 continue;
@@ -88,20 +90,24 @@ class Parser
         return $grammar;
     }
 
-    private function token(pars\Parser $parser)
+    private function tokenOrSymbol(pars\Parser $parser)
     {
         if ($parser->checkFor(
+            [self::TOKEN, self::SYMBOL],
             self::TOKEN_ID,
-            self::ASSIGN,
             self::STRING,
             self::SEMICOLON)) {
 
-            $tokenAst = new pars\Ast("token");
             $tokens = $parser->consumeMany(4);
+            $isToken = $tokens[0]->getType() == self::TOKEN;
 
-            $tokenAst->setAttr("name", $tokens[0]->getContent());
+            $tokenAst =  $isToken ?
+                new pars\Ast("token") :
+                new pars\Ast("symbol");
+
+            $tokenAst->setAttr("name", $tokens[1]->getContent());
             $pattern = trim($tokens[2]->getContent(), "'/'");
-            $tokenAst->setAttr("pattern", $pattern);
+            $tokenAst->setAttr($isToken ? "pattern" : "value", $pattern);
 
             return $tokenAst;
 
@@ -115,7 +121,7 @@ class Parser
         // TODO: annotation handling...
 
         try {
-            $tokens = $parser->consumeExpected(self::ID, self::ASSIGN);
+            $tokens = $parser->consumeExpected(self::ID, self::ARROW);
             $ruleAst = new pars\Ast("rule");
             $ruleAst->setAttr("name", $tokens[0]->getContent());
 
@@ -353,10 +359,12 @@ class Parser
         $lexer->addSymbol("+", self::PLUS);
         $lexer->addSymbol("?", self::QUESTION_MARK);
         $lexer->addSymbol(";", self::SEMICOLON);
-        $lexer->addSymbol("=", self::ASSIGN);
+        $lexer->addSymbol("->", self::ARROW);
         $lexer->addSymbol("@", self::AT);
 
         $lexer->addKeyword("grammar");
+        $lexer->addKeyword("token");
+        $lexer->addKeyword("symbol");
 
         $lexer->addTerminal("/[A-Z_][A-Z0-9_]*/", self::TOKEN_ID);
         $lexer->addTerminal("/[a-z_][a-z0-9_]*/", self::ID);
