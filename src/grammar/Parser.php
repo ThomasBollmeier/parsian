@@ -37,6 +37,7 @@ class Parser
     const STRING = "STRING";
     const TOKEN = "TOKEN";
     const SYMBOL = "SYMBOL";
+    const GRAMMAR = "GRAMMAR";
 
 
     public function __construct()
@@ -118,12 +119,16 @@ class Parser
 
     private function rule(pars\Parser $parser)
     {
-        // TODO: annotation handling...
+        $annotations = $this->annotations($parser);
 
         try {
             $tokens = $parser->consumeExpected(self::ID, self::ARROW);
             $ruleAst = new pars\Ast("rule");
             $ruleAst->setAttr("name", $tokens[0]->getContent());
+
+            foreach ($annotations as $annot) {
+                $ruleAst->addChild($annot);
+            }
 
             $branches = $this->branches($parser);
             if (empty($branches)) {
@@ -142,6 +147,22 @@ class Parser
             return false;
         }
 
+    }
+
+    private function annotations(pars\Parser $parser)
+    {
+        $annotations = [];
+
+        while (true) {
+            $tokens = $parser->checkFor(self::AT, [self::GRAMMAR]);
+            if ($tokens === false) {
+                break;
+            }
+            $annotations[] = new pars\Ast("annot", $tokens[1]->getContent());
+            $parser->consumeMany(2);
+        }
+
+        return $annotations;
     }
 
     private function branches(pars\Parser $parser)
@@ -191,27 +212,47 @@ class Parser
 
     private function element(pars\Parser $parser)
     {
-        $elemAst = $this->ruleId($parser);
+        // Check for id:
+        $tokens = $parser->checkFor(self::ID, self::HASH);
+        if ($tokens !== false) {
+            $id = $tokens[0]->getContent();
+            $parser->consumeMany(2);
+        } else {
+            $id = null;
+        }
+
+        $elemAst = false;
+
+        while (true) {
+
+            $elemAst = $this->ruleId($parser);
+            if ($elemAst !== false) {
+                break;
+            }
+
+            $elemAst = $this->keyword($parser);
+            if ($elemAst !== false) {
+                break;
+            }
+
+            $elemAst = $this->group($parser);
+            if ($elemAst !== false) {
+                break;
+            }
+
+            $elemAst = $this->tokenId($parser);
+            break;
+
+        }
+
         if ($elemAst !== false) {
+            if ($id !== null) {
+                $elemAst->setAttr("id", $id);
+            }
             return $this->multChecked($elemAst, $parser);
         }
 
-        $elemAst = $this->keyword($parser);
-        if ($elemAst !== false) {
-            return $this->multChecked($elemAst, $parser);
-        }
-
-        $elemAst = $this->group($parser);
-        if ($elemAst !== false) {
-            return $this->multChecked($elemAst, $parser);
-        }
-
-        $elemAst = $this->tokenId($parser);
-        if ($elemAst !== false) {
-            return $this->multChecked($elemAst, $parser);
-        }
-
-        return false;
+        return $elemAst;
 
     }
 

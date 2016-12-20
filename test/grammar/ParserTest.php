@@ -28,14 +28,19 @@ class ParserTest extends TestCase
 -- Tokens:
 
 token ID /[a-z][a-z0-9-\?]*/;
-symbol AND '&&';
-symbol OR '||';
+symbol PAR_OPEN '(';
+symbol PAR_CLOSE ')';
 
 -- Rules:
 
-boolean_expr -> conjunction (OR boolean_expr)*; 
+@grammar
+boolean_expr -> conjunction ( 'or' others#conjunction )*;
+ 
+conjunction -> group ('and' group)*;
 
+group -> neg#'not'? ( PAR_OPEN b#boolean_expr PAR_CLOSE | a#atomic );
 
+atomic -> left#ID ('eq' | 'ne' | 'gt' | 'ge' | 'lt' | 'le' ) right#ID; 
 
 GRAMMAR;
 
@@ -44,7 +49,7 @@ GRAMMAR;
 
 
         $this->assertNotNull($ast);
-        $this->assertEquals(4, count($ast->getChildren()));
+        $this->assertEquals(7, count($ast->getChildren()));
 
         print ($ast->toXml());
 
