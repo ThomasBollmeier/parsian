@@ -71,7 +71,7 @@ CODE;
         while ($tin->hasMoreTokens()) {
             $token = $tin->nextToken();
             $tokens[] = $token;
-            printf("%s".PHP_EOL, $token);
+            //printf("%s".PHP_EOL, $token);
         }
 
         $tin->close();
@@ -89,6 +89,48 @@ CODE;
         $this->assertEquals('"Tho\\"mas"', $tokens[8]->getContent());
         $this->assertEquals("PAR_CLOSE", $tokens[9]->getType());
 
+    }
+
+    public function testCaseSensitivity()
+    {
+        $lexer = $this->createLexer();
+
+        $code = <<<CODE
+(DEFINE whoami "alterego")
+CODE;
+
+        $tokenInput = $lexer->createTokenInput(new StringCharInput($code));
+
+        $tokens = $this->getTokens($tokenInput);
+        $tokenTypes = array_map(function($token) { return $token->getType(); }, $tokens);
+
+        $this->assertEquals(5, count($tokenTypes));
+        $this->assertEquals("terminal", $tokenTypes[1]);
+
+        $lexer->setCaseSensitive(false);
+
+        $tokenInput = $lexer->createTokenInput(new StringCharInput($code));
+
+        $tokens = $this->getTokens($tokenInput);
+        $tokenTypes = array_map(function($token) { return $token->getType(); }, $tokens);
+
+        $this->assertEquals(5, count($tokenTypes));
+        $this->assertEquals("DEFINE", $tokenTypes[1]);
+
+    }
+
+    private function getTokens(\tbollmeier\parsian\TokenInput $tokenInput)
+    {
+        $tokens = [];
+        $tokenInput->open();
+
+        while ($tokenInput->hasMoreTokens()) {
+            $tokens[] = $tokenInput->nextToken();
+        }
+
+        $tokenInput->close();
+
+        return $tokens;
     }
 
     private function createLexer()

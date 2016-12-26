@@ -28,6 +28,7 @@ class Lexer
     private $symbols;
     private $terminals;
     private $keywords;
+    private $caseSensitive;
 
     public function __construct()
     {
@@ -38,11 +39,17 @@ class Lexer
         $this->symbols = [];
         $this->terminals = [];
         $this->keywords = [];
+        $this->caseSensitive = true;
     }
 
     public function setWhitespace($wsChars)
     {
         $this->wsChars = $wsChars;
+    }
+
+    public function setCaseSensitive($caseSensitive=true)
+    {
+        $this->caseSensitive = $caseSensitive;
     }
 
     public function addCommentType(string $startSeq, string $endSeq)
@@ -93,6 +100,7 @@ class Lexer
         $config->symbols = $this->symbols;
         $config->terminals = $this->terminals;
         $config->keywords = $this->keywords;
+        $config->caseSensitive = $this->caseSensitive;
 
         return new TokenInputImpl($charIn, $config);
     }

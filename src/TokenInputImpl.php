@@ -33,6 +33,7 @@ class TokenInputImpl implements TokenInput
     private $symbols;
     private $terminals;
     private $keywords;
+    private $caseSensitive;
 
     const MODE_NORMAL = 1;
     const MODE_COMMENT = 2;
@@ -53,6 +54,7 @@ class TokenInputImpl implements TokenInput
         $this->symbols = $config->symbols;
         $this->terminals = $config->terminals;
         $this->keywords = $config->keywords;
+        $this->caseSensitive = $config->caseSensitive;
 
     }
 
@@ -263,11 +265,17 @@ class TokenInputImpl implements TokenInput
         $found = false;
 
         foreach ($this->keywords as $kw) {
-            if ($kw === $content) {
+
+            $matched = $this->caseSensitive ?
+                $kw === $content :
+                strtoupper($kw) === strtoupper($content);
+
+            if ($matched) {
                 $type = strtoupper($kw);
                 $found = true;
                 break;
             }
+
         }
 
         if (!$found) {
