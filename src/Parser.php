@@ -91,8 +91,38 @@ class Parser
             }
             return $actualTokens;
         } else {
-            throw new \Exception("Parsing error");
+            throw $this->createParseException($expectedTokenTypes);
         }
+    }
+
+    private function createParseException($expectedTokenTypes)
+    {
+        $numExpected = count($expectedTokenTypes);
+
+        $actualTokens = $this->lookupMany($numExpected);
+        $numActual = count($actualTokens);
+
+        for ($i=0; $i < $numExpected; $i++) {
+
+            $expected = $expectedTokenTypes[$i];
+
+            if ($i > $numActual-1) {
+                return is_array($expected) ?
+                    ParseException::noTokenForTokenTypes($expected) :
+                    ParseException::noTokenForTokenType($expected);
+
+            }
+
+            $actualToken = $actualTokens[$i];
+
+            if (!$this->matches($actualToken, $expected)) {
+                return ParseException::unexpectedToken($actualToken);
+            }
+
+        }
+
+        return ParseException::createError("Parsing error");
+
     }
 
     /** lookup next n tokens
