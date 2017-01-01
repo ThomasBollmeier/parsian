@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+Copyright 2016-2017 Thomas Bollmeier <entwickler@tbollmeier.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,17 +51,15 @@ CODE;
 
     private function createLexer()
     {
-        $lx = new Lexer();
+        return (new Lexer())
+            ->addCommentType("--", PHP_EOL)
+            ->addStringType('"', '\"')
+            ->addSymbol("(", "PAR_OPEN")
+            ->addSymbol(")", "PAR_CLOSE")
+            ->addTerminal("/[a-z][a-z0-9\\-]*/", "ID")
+            ->addTerminal("/[1-9]\\d*/", "NUM")
+            ->addKeyword("define");
 
-        $lx->addCommentType("--", PHP_EOL);
-        $lx->addStringType('"', '\"');
-        $lx->addSymbol("(", "PAR_OPEN");
-        $lx->addSymbol(")", "PAR_CLOSE");
-        $lx->addTerminal("/[a-z][a-z0-9\\-]*/", "ID");
-        $lx->addTerminal("/[1-9]\\d*/", "NUM");
-        $lx->addKeyword("define");
-
-        return $lx;
     }
 
 }

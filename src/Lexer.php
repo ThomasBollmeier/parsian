@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+Copyright 2016-2017 Thomas Bollmeier <entwickler@tbollmeier.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ class Lexer
     public function setWhitespace($wsChars)
     {
         $this->wsChars = $wsChars;
+        return $this;
     }
 
     public function setCaseSensitive($caseSensitive=true)
     {
         $this->caseSensitive = $caseSensitive;
+        return $this;
     }
 
     public function addCommentType(string $startSeq, string $endSeq)
@@ -57,6 +59,7 @@ class Lexer
         $this->commentTypes[] = [$startSeq, $endSeq];
         $this->adjustBufSize($startSeq);
         $this->adjustBufSize($endSeq);
+        return $this;
     }
 
     public function addStringType(string $delimSeq, string $escSeq=null)
@@ -64,22 +67,26 @@ class Lexer
         $this->stringTypes[] = [$delimSeq, $escSeq];
         $this->adjustBufSize($delimSeq);
         $this->adjustBufSize($escSeq);
+        return $this;
     }
 
     public function addSymbol(string $seq, string $name="symbol")
     {
         $this->symbols[] = [$seq, $name];
         $this->adjustBufSize($seq);
+        return $this;
     }
 
     public function addKeyword(string $seq)
     {
         $this->keywords[] = $seq;
+        return $this;
     }
 
     public function addTerminal(string $pattern, string $name)
     {
         $this->terminals[] = [$pattern, $name];
+        return $this;
     }
 
     private function adjustBufSize(string $seq)
