@@ -66,7 +66,9 @@ class Lexer
     {
         $this->stringTypes[] = [$delimSeq, $escSeq];
         $this->adjustBufSize($delimSeq);
-        $this->adjustBufSize($escSeq);
+        if ($escSeq !== null) {
+            $this->adjustBufSize($escSeq);
+        }
         return $this;
     }
 
@@ -86,6 +88,24 @@ class Lexer
     public function addTerminal(string $pattern, string $name)
     {
         $this->terminals[] = [$pattern, $name];
+        return $this;
+    }
+
+    public function addKeywords($kws)
+    {
+        foreach ($kws as $kw) {
+            $this->addKeyword($kw);
+        }
+
+        return $this;
+    }
+
+    public function addSymbols($nameValues)
+    {
+        foreach ($nameValues as $name => $value) {
+            $this->addSymbol($value, $name);
+        }
+
         return $this;
     }
 
