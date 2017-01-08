@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+Copyright 2016-2017 Thomas Bollmeier <entwickler@tbollmeier.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,17 +18,19 @@ limitations under the License.
 namespace tbollmeier\parsian;
 
 
-class Parser
+class TokenStream
 {
     private $tokenIn;
     private $tokens;
     private $bufSize;
+    private $consumedTokens;
 
     public function __construct(TokenInput $tokenIn)
     {
         $this->tokenIn = $tokenIn;
         $this->tokens = [];
         $this->bufSize = 1;
+        $this->consumedTokens = [[]];
     }
 
     public function openTokenInput()
@@ -87,7 +89,7 @@ class Parser
         if ($actualTokens !== false) {
             $cnt = count($actualTokens);
             for ($i=0; $i<$cnt; $i++) {
-                array_shift($this->tokens);
+                $this->recordConsumption(array_shift($this->tokens));
             }
             return $actualTokens;
         } else {
@@ -122,7 +124,9 @@ class Parser
         }
 
         if (!empty($this->tokens)) {
-            return array_shift($this->tokens);
+            $token = array_shift($this->tokens);
+            $this->recordConsumption($token);
+            return $token;
         } else {
             return false;
         }
@@ -134,7 +138,7 @@ class Parser
         $cnt = count($consumed);
 
         for ($i=0; $i<$cnt; $i++) {
-            array_shift($this->tokens);
+            $this->recordConsumption(array_shift($this->tokens));
         }
 
         return $consumed;
@@ -145,6 +149,34 @@ class Parser
         while ($this->tokenIn->hasMoreTokens() && count($this->tokens) < $this->bufSize) {
             $this->tokens[] = $this->tokenIn->nextToken();
         }
+    }
+
+    public function newConsumption()
+    {
+        array_unshift($this->consumedTokens, []);
+    }
+
+    public function commitConsumption()
+    {
+        $tokens = array_shift($this->consumedTokens);
+        if (count($this->consumedTokens) > 0) {
+            $this->consumedTokens[0] = array_merge($this->consumedTokens[0], $tokens);
+        } else {
+            $this->consumedTokens = [[]];
+        }
+    }
+
+    public function rollbackConsumption()
+    {
+        $tokens = array_reverse(array_shift($this->consumedTokens));
+        foreach ($tokens as $token) {
+            array_unshift($this->tokens, $token);
+        }
+    }
+
+    private function recordConsumption($token)
+    {
+        array_push($this->consumedTokens[0], $token);
     }
 
 }
