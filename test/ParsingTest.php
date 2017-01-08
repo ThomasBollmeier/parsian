@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 use tbollmeier\parsian\Lexer;
 use tbollmeier\parsian\StringCharInput;
-use tbollmeier\parsian\Parser;
+use tbollmeier\parsian\TokenStream;
 use tbollmeier\parsian\ParseException;
 
 
@@ -32,12 +32,12 @@ class ParsingTest extends TestCase
 (define 99invalid 23)
 CODE;
 
-        $parser = new Parser($this->createLexer()->createTokenInput(new StringCharInput($codeWithError)));
-        $parser->openTokenInput();
+        $stream = new TokenStream($this->createLexer()->createTokenInput(new StringCharInput($codeWithError)));
+        $stream->openTokenInput();
 
         try {
 
-            $parser->consumeExpected("PAR_OPEN", "DEFINE", "ID", ["NUM", "ID"], "PAR_CLOSE");
+            $stream->consumeExpected("PAR_OPEN", "DEFINE", "ID", ["NUM", "ID"], "PAR_CLOSE");
             $this->fail("Exception expected");
 
         } catch (ParseException $error) {

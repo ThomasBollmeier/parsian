@@ -63,6 +63,30 @@ class Ast
         return $this->children;
     }
 
+    public function getChildrenById($id) : array
+    {
+        $res = [];
+        foreach ($this->children as $child) {
+            if ($child->hasAttr("id") && $child->getAttr("id") == $id) {
+                $res[] = $child;
+            }
+        }
+
+        return $res;
+    }
+
+    public function setId($id)
+    {
+        $this->setAttr('id', $id);
+    }
+
+    public function clearId()
+    {
+        if (array_key_exists("id", $this->attrs)) {
+            unset($this->attrs["id"]);
+        }
+    }
+
     /**
      * @return array
      */
@@ -74,6 +98,11 @@ class Ast
     public function getAttr($key) : string
     {
         return $this->attrs[$key];
+    }
+
+    public function hasAttr($key) : bool
+    {
+        return array_key_exists($key, $this->attrs);
     }
 
     /**

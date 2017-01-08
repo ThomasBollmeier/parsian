@@ -27,6 +27,7 @@ class Rule implements Translator
 
     private $name;
     private $content;
+    private $customAstFn;
 
     public static function get($name) : Rule
     {
@@ -37,8 +38,21 @@ class Rule implements Translator
     {
         $this->name = $name;
         $this->content = $content;
+        $this->customAstFn = null;
 
         self::$rules[$name] = $this;
+    }
+
+    /**
+     * Define a function to transform the ASt node into
+     * a custom one. The signature is:
+     *
+     * function myAst(Ast $ast) : Ast
+     *
+     */
+    public function setCustomAstFn($callback)
+    {
+        $this->customAstFn = $callback;
     }
 
     public function translate(TokenStream $stream)
@@ -49,6 +63,9 @@ class Rule implements Translator
         if ($contentNodes !== false) {
             foreach ($contentNodes as $contentNode) {
                 $ast->addChild($contentNode);
+            }
+            if ($this->customAstFn !== null) {
+                $ast = ($this->customAstFn)($ast);
             }
             return [$ast];
         } else {

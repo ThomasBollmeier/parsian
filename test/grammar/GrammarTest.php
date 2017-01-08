@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 use tbollmeier\parsian\Lexer;
 use tbollmeier\parsian\StringCharInput;
 use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\Ast;
 use tbollmeier\parsian\grammar\Terminal as Term;
 use tbollmeier\parsian\grammar\ZeroToOne as Opt;
 use tbollmeier\parsian\grammar\Many as Many;
@@ -59,7 +60,24 @@ CODE;
                         ->add(new Term("OR"))
                         ->add(new RuleRef("conj", "elem")))));
 
-        new Rule("conj",
+        $disj->setCustomAstFn(function(Ast $ast) {
+
+            $elems = $ast->getChildrenById("elem");
+            if (count($elems) > 1) {
+                $res = new Ast("or");
+                foreach ($elems as $elem) {
+                    $elem->clearId();
+                    $res->addChild($elem);
+                }
+            } else {
+                $res = $elems[0];
+                $res->clearId();
+            }
+
+            return $res;
+        });
+
+        $conj = new Rule("conj",
             (new Seq())
                 ->add(new RuleRef("expr", "elem"))
                 ->add(new Many(
@@ -67,7 +85,24 @@ CODE;
                         ->add(new Term("AND"))
                         ->add(new RuleRef("expr", "elem")))));
 
-        new Rule("expr",
+        $conj->setCustomAstFn(function(Ast $ast) {
+
+            $elems = $ast->getChildrenById("elem");
+            if (count($elems) > 1) {
+                $res = new Ast("and");
+                foreach ($elems as $elem) {
+                    $elem->clearId();
+                    $res->addChild($elem);
+                }
+            } else {
+                $res = $elems[0];
+                $res->clearId();
+            }
+
+            return $res;
+        });
+
+        $expr = new Rule("expr",
             (new Seq())
                 ->add(new Opt(new Term("NOT", "neg")))
                 ->add((new Alt())
@@ -76,6 +111,19 @@ CODE;
                             ->add(new Term("PAR_OPEN"))
                             ->add(new RuleRef("disj", "content"))
                             ->add(new Term("PAR_CLOSE")))));
+
+        $expr->setCustomAstFn(function (Ast $ast) {
+
+            $contents = $ast->getChildrenById("content");
+            $res = $contents[0];
+            $res->clearId();
+
+            if (!empty($ast->getChildrenById("neg"))) {
+                $res->setAttr("negated", "true");
+            }
+
+            return $res;
+        });
 
         return $disj;
     }
