@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+Copyright 2016-2017 Thomas Bollmeier <entwickler@tbollmeier.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,29 +57,29 @@ class Parser
     private function parse(pars\CharInput $charInput)
     {
         $tokenInput = $this->createLexer()->createTokenInput($charInput);
-        $parser = new pars\Parser($tokenInput);
-        $parser->openTokenInput();
+        $tokenStream = new pars\TokenStream($tokenInput);
+        $tokenStream->openTokenInput();
 
-        $ast = $this->grammar($parser);
+        $ast = $this->grammar($tokenStream);
 
-        $parser->closeTokenInput();
+        $tokenStream->closeTokenInput();
 
         return $ast;
     }
 
-    private function grammar(pars\Parser $parser)
+    private function grammar(pars\TokenStream $tokenStream)
     {
         $grammar = new pars\Ast("grammar");
 
         while (true) {
 
-            $token = $this->tokenOrSymbol($parser);
+            $token = $this->tokenOrSymbol($tokenStream);
             if ( $token !== false) {
                 $grammar->addChild($token);
                 continue;
             }
 
-            $rule = $this->rule($parser);
+            $rule = $this->rule($tokenStream);
             if ( $rule !== false) {
                 $grammar->addChild($rule);
                 continue;
@@ -91,15 +91,15 @@ class Parser
         return $grammar;
     }
 
-    private function tokenOrSymbol(pars\Parser $parser)
+    private function tokenOrSymbol(pars\TokenStream $tokenStream)
     {
-        if ($parser->checkFor(
+        if ($tokenStream->checkFor(
             [self::TOKEN, self::SYMBOL],
             self::TOKEN_ID,
             self::STRING,
             self::SEMICOLON)) {
 
-            $tokens = $parser->consumeMany(4);
+            $tokens = $tokenStream->consumeMany(4);
             $isToken = $tokens[0]->getType() == self::TOKEN;
 
             $tokenAst =  $isToken ?
@@ -117,12 +117,12 @@ class Parser
         }
     }
 
-    private function rule(pars\Parser $parser)
+    private function rule(pars\TokenStream $tokenStream)
     {
-        $annotations = $this->annotations($parser);
+        $annotations = $this->annotations($tokenStream);
 
         try {
-            $tokens = $parser->consumeExpected(self::ID, self::ARROW);
+            $tokens = $tokenStream->consumeExpected(self::ID, self::ARROW);
             $ruleAst = new pars\Ast("rule");
             $ruleAst->setAttr("name", $tokens[0]->getContent());
 
@@ -130,7 +130,7 @@ class Parser
                 $ruleAst->addChild($annot);
             }
 
-            $branches = $this->branches($parser);
+            $branches = $this->branches($tokenStream);
             if (empty($branches)) {
                 return false;
             }
@@ -139,7 +139,7 @@ class Parser
                 $ruleAst->addChild($branchAst);
             }
 
-            $parser->consumeExpected(self::SEMICOLON);
+            $tokenStream->consumeExpected(self::SEMICOLON);
 
             return $ruleAst;
 
@@ -149,50 +149,50 @@ class Parser
 
     }
 
-    private function annotations(pars\Parser $parser)
+    private function annotations(pars\TokenStream $tokenStream)
     {
         $annotations = [];
 
         while (true) {
-            $tokens = $parser->checkFor(self::AT, [self::GRAMMAR]);
+            $tokens = $tokenStream->checkFor(self::AT, [self::GRAMMAR]);
             if ($tokens === false) {
                 break;
             }
             $annotations[] = new pars\Ast("annot", $tokens[1]->getContent());
-            $parser->consumeMany(2);
+            $tokenStream->consumeMany(2);
         }
 
         return $annotations;
     }
 
-    private function branches(pars\Parser $parser)
+    private function branches(pars\TokenStream $tokenStream)
     {
         $branches = [];
 
         while (true) {
-            $branchAst = $this->branch($parser);
+            $branchAst = $this->branch($tokenStream);
             if ($branchAst !== false) {
                 $branches[] = $branchAst;
             } else {
                 return [];
             }
-            if ($parser->checkFor(self::PIPE) === false) {
+            if ($tokenStream->checkFor(self::PIPE) === false) {
                 break;
             } else {
-                $parser->consume();
+                $tokenStream->consume();
             }
         }
 
         return $branches;
     }
 
-    private function branch(pars\Parser $parser)
+    private function branch(pars\TokenStream $tokenStream)
     {
         $branchAst = false;
 
         while (true) {
 
-            $elemAst = $this->element($parser);
+            $elemAst = $this->element($tokenStream);
             if ($elemAst === false) {
                 return $branchAst;
             }
@@ -210,13 +210,13 @@ class Parser
         return $branchAst;
     }
 
-    private function element(pars\Parser $parser)
+    private function element(pars\TokenStream $tokenStream)
     {
         // Check for id:
-        $tokens = $parser->checkFor(self::ID, self::HASH);
+        $tokens = $tokenStream->checkFor(self::ID, self::HASH);
         if ($tokens !== false) {
             $id = $tokens[0]->getContent();
-            $parser->consumeMany(2);
+            $tokenStream->consumeMany(2);
         } else {
             $id = null;
         }
@@ -225,22 +225,22 @@ class Parser
 
         while (true) {
 
-            $elemAst = $this->ruleId($parser);
+            $elemAst = $this->ruleId($tokenStream);
             if ($elemAst !== false) {
                 break;
             }
 
-            $elemAst = $this->keyword($parser);
+            $elemAst = $this->keyword($tokenStream);
             if ($elemAst !== false) {
                 break;
             }
 
-            $elemAst = $this->group($parser);
+            $elemAst = $this->group($tokenStream);
             if ($elemAst !== false) {
                 break;
             }
 
-            $elemAst = $this->tokenId($parser);
+            $elemAst = $this->tokenId($tokenStream);
             break;
 
         }
@@ -249,16 +249,16 @@ class Parser
             if ($id !== null) {
                 $elemAst->setAttr("id", $id);
             }
-            return $this->multChecked($elemAst, $parser);
+            return $this->multChecked($elemAst, $tokenStream);
         }
 
         return $elemAst;
 
     }
 
-    private function multChecked(pars\Ast $elemAst, pars\Parser $parser)
+    private function multChecked(pars\Ast $elemAst, pars\TokenStream $tokenStream)
     {
-        $mult = $this->multiplicity($parser);
+        $mult = $this->multiplicity($tokenStream);
         if ($mult !== false) {
             switch ($mult) {
                 case self::MULT_ZERO_TO_ONE:
@@ -276,11 +276,11 @@ class Parser
         return $elemAst;
     }
 
-    private function ruleId(pars\Parser $parser)
+    private function ruleId(pars\TokenStream $tokenStream)
     {
-        if ($parser->checkFor(self::ID)) {
+        if ($tokenStream->checkFor(self::ID)) {
 
-            $token = $parser->consume();
+            $token = $tokenStream->consume();
             $ruleIdAst = new pars\Ast("rule_id");
             $ruleIdAst->setAttr("name", $token->getContent());
 
@@ -294,11 +294,11 @@ class Parser
 
     }
 
-    private function keyword(pars\Parser $parser)
+    private function keyword(pars\TokenStream $tokenStream)
     {
-        if ($parser->checkFor(self::STRING)) {
+        if ($tokenStream->checkFor(self::STRING)) {
 
-            $token = $parser->consume();
+            $token = $tokenStream->consume();
             $keywordAst = new pars\Ast("keyword");
             $keywordAst->setAttr("name", trim($token->getContent(), "'/'"));
 
@@ -311,14 +311,14 @@ class Parser
         }
     }
 
-    private function group(pars\Parser $parser)
+    private function group(pars\TokenStream $tokenStream)
     {
         try {
 
-            $parser->consumeExpected(self::PAR_OPEN);
+            $tokenStream->consumeExpected(self::PAR_OPEN);
 
             $groupAst = new pars\Ast("group");
-            $branches = $this->branches($parser);
+            $branches = $this->branches($tokenStream);
             if (empty($branches)) {
                 return false;
             }
@@ -327,7 +327,7 @@ class Parser
                 $groupAst->addChild($branch);
             }
 
-            $parser->consumeExpected(self::PAR_CLOSE);
+            $tokenStream->consumeExpected(self::PAR_CLOSE);
 
             return $groupAst;
 
@@ -336,11 +336,11 @@ class Parser
         }
     }
 
-    private function tokenId(pars\Parser $parser)
+    private function tokenId(pars\TokenStream $tokenStream)
     {
         try {
 
-            $tokenIds = $parser->consumeExpected(self::TOKEN_ID);
+            $tokenIds = $tokenStream->consumeExpected(self::TOKEN_ID);
             if (empty($tokenIds)) {
                 return false;
             }
@@ -358,11 +358,11 @@ class Parser
     const MULT_MANY = 2;
     const MULT_ONE_TO_MANY = 3;
 
-    private function multiplicity(pars\Parser $parser)
+    private function multiplicity(pars\TokenStream $tokenStream)
     {
         try {
 
-            $tokens = $parser->consumeExpected([
+            $tokens = $tokenStream->consumeExpected([
                 self::QUESTION_MARK,
                 self::ASTERISK,
                 self::PLUS
