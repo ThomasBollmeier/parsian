@@ -15,26 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use PHPUnit\Framework\TestCase;
+namespace tbollmeier\parsian\input;
 
-use tbollmeier\parsian\FileCharInput;
 
-class FileCharInputTest extends TestCase
+class Position
 {
-    public function testCharInput()
+    public $line;
+    public $column;
+
+    public function __construct(int $line, int $column)
     {
-        $input = new FileCharInput(__DIR__ . DIRECTORY_SEPARATOR . "file_char_input_test.txt");
-
-        $input->open();
-
-        for ($i=0; $i<5; $i++) {
-            $input->nextChar();
-        }
-        $this->assertEquals(2, $input->line());
-        $this->assertEquals(1, $input->column());
-        $this->assertEquals("t", $input->nextChar());
-
-        $input->close();
+        $this->line = $line;
+        $this->column = $column;
     }
-
 }

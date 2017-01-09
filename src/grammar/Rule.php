@@ -18,8 +18,8 @@ limitations under the License.
 namespace tbollmeier\parsian\grammar;
 
 
-use tbollmeier\parsian\Ast;
-use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\output\Ast;
+use tbollmeier\parsian\input\TokenStream;
 
 class Rule implements Translator
 {

@@ -18,22 +18,24 @@ limitations under the License.
 namespace tbollmeier\parsian\grammar;
 
 
-use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\input\TokenStream;
 
 class RuleRef implements Translator
 {
+    private $grammar;
     private $name;
     private $id;
 
-    public function __construct(string $name, $id="")
+    public function __construct(Grammar $grammar, $name, $id="")
     {
+        $this->grammar = $grammar;
         $this->name = $name;
         $this->id = $id;
     }
 
     public function translate(TokenStream $stream)
     {
-        $rule = Rule::get($this->name);
+        $rule = $this->grammar->getRule($this->name);
         $astNodes = $rule->translate($stream);
 
         if ($astNodes !== false && !empty($this->id)) {

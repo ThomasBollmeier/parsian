@@ -17,7 +17,7 @@ limitations under the License.
 
 use PHPUnit\Framework\TestCase;
 
-use tbollmeier\parsian\StringCharInput;
+use tbollmeier\parsian\input\StringCharInput;
 
 class StringCharInputTest extends TestCase
 {

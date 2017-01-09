@@ -15,17 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-namespace tbollmeier\parsian;
+namespace tbollmeier\parsian\input;
 
 
-class Position
+class CharInfo
 {
-    public $line;
-    public $column;
+    public $ch;
+    public $pos;
 
-    public function __construct(int $line, int $column)
+    public function __construct(string $ch, Position $pos)
     {
-        $this->line = $line;
-        $this->column = $column;
+        $this->ch = $ch;
+        $this->pos = $pos;
     }
 }

@@ -17,9 +17,9 @@ limitations under the License.
 
 use PHPUnit\Framework\TestCase;
 
-use tbollmeier\parsian\Lexer;
-use tbollmeier\parsian\StringCharInput;
-use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\input\Lexer;
+use tbollmeier\parsian\input\StringCharInput;
+use tbollmeier\parsian\input\TokenStream;
 
 
 class TokenStreamTest extends TestCase

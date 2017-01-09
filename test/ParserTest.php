@@ -16,37 +16,33 @@ limitations under the License.
 */
 
 use PHPUnit\Framework\TestCase;
-
-use tbollmeier\parsian\input\Lexer;
-use tbollmeier\parsian\input\StringCharInput;
-use tbollmeier\parsian\input\TokenStream;
+use tbollmeier\parsian\Parser;
 use tbollmeier\parsian\output\Ast;
-use tbollmeier\parsian\grammar\Grammar;
 
-class GrammarTest extends TestCase
+class ParserTest extends TestCase
 {
     public function testExpressions()
     {
-        $grammar = $this->createGrammar();
+        $parser = new Parser();
+
+        $this->configLexer($parser);
+        $this->configGrammar($parser);
 
         $code = <<<CODE
 a and ( b or ~c )
 CODE;
 
-        $lexer = $this->createLexer();
-        $stream = new TokenStream($lexer->createTokenInput(new StringCharInput($code)));
+        $ast = $parser->parseString($code);
 
-        $nodes = $grammar->getRoot()->translate($stream);
+        self::assertNotFalse($ast);
 
-        self::assertNotFalse($nodes);
-
-        print(($nodes[0])->toXml());
+        print(($ast)->toXml());
 
     }
 
-    private function createGrammar()
+    private function configGrammar(Parser $parser)
     {
-        $g = new Grammar();
+        $g = $parser->getGrammar();
 
         $disj = $g->rule("disj",
             ($g->seq())
@@ -126,20 +122,17 @@ CODE;
            return new Ast("id", $ast->getText());
         });
 
-        return $g;
     }
 
-    private function createLexer()
+    private function configLexer(Parser $parser)
     {
-        $lexer = new Lexer();
+        $lexer = $parser->getLexer();
         $lexer->addKeyword("or");
         $lexer->addKeyword("and");
         $lexer->addSymbol("(", "PAR_OPEN");
         $lexer->addSymbol(")", "PAR_CLOSE");
         $lexer->addSymbol("~", "NOT");
         $lexer->addTerminal("/[a-z]+/", "IDENT");
-
-        return $lexer;
     }
 
 }

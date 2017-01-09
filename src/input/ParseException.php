@@ -16,7 +16,7 @@ limitations under the License.
 */
 
 
-namespace tbollmeier\parsian;
+namespace tbollmeier\parsian\input;
 
 
 class ParseException extends \Exception

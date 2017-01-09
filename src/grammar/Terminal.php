@@ -19,16 +19,18 @@ limitations under the License.
 namespace tbollmeier\parsian\grammar;
 
 
-use tbollmeier\parsian\Ast;
-use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\output\Ast;
+use tbollmeier\parsian\input\TokenStream;
 
 class Terminal implements Translator
 {
+    private $grammar;
     private $tokenType;
     private $id;
 
-    public function __construct($tokenType, $id="")
+    public function __construct(Grammar $grammar, $tokenType, $id="")
     {
+        $this->grammar = $grammar;
         $this->tokenType = $tokenType;
         $this->id = $id;
     }
@@ -37,15 +39,27 @@ class Terminal implements Translator
     {
         $token = $stream->lookup();
         if ($token && $token->getType() === $this->tokenType) {
+
             $stream->consume();
+
             $ast = new Ast('terminal', $token->getContent());
             $ast->setAttr('type', $token->getType());
+
+            $callback = $this->grammar->customTermAst($this->tokenType);
+            if ($callback !== null) {
+                $ast = $callback($ast);
+            }
+
             if (!empty($this->id)) {
                 $ast->setAttr('id', $this->id);
             }
+
             return [$ast];
+
         } else {
+
             return false;
+
         }
     }
 }

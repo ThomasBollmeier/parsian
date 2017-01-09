@@ -17,9 +17,10 @@ limitations under the License.
 
 use PHPUnit\Framework\TestCase;
 
-use tbollmeier\parsian\Lexer;
-use tbollmeier\parsian\StringCharInput;
-use tbollmeier\parsian\FileCharInput;
+use tbollmeier\parsian\input\Lexer;
+use tbollmeier\parsian\input\StringCharInput;
+use tbollmeier\parsian\input\FileCharInput;
+use tbollmeier\parsian\input\TokenInput;
 
 
 class TokenInputTest extends TestCase
@@ -119,7 +120,7 @@ CODE;
 
     }
 
-    private function getTokens(\tbollmeier\parsian\TokenInput $tokenInput)
+    private function getTokens(TokenInput $tokenInput)
     {
         $tokens = [];
         $tokenInput->open();

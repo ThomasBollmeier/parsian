@@ -19,7 +19,7 @@ limitations under the License.
 namespace tbollmeier\parsian\grammar;
 
 
-use tbollmeier\parsian\TokenStream;
+use tbollmeier\parsian\input\TokenStream;
 
 interface Translator
 {
