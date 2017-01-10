@@ -214,4 +214,13 @@ class TokenStream
         return !empty($this->tokens) || $this->tokenIn->hasMoreTokens();
     }
 
+    public function getLastUnconsumedToken()
+    {
+        $num = count($this->tokens);
+
+        return $num > 0 ?
+            $this->tokens[$num -1] :
+            null;
+    }
+
 }

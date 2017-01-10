@@ -26,11 +26,13 @@ class Parser
 {
     private $lexer;
     private $grammar;
+    private $lastErrorToken;
 
     public function __construct()
     {
         $this->lexer = new in\Lexer();
         $this->grammar = new Grammar();
+        $this->lastErrorToken = null;
     }
 
     /**
@@ -71,7 +73,7 @@ class Parser
 
     public function error() : string
     {
-        $token = $this->grammar->getLastTokenError();
+        $token = $this->lastErrorToken;
         if ($token !== null) {
             $pos = $token->getStartPos();
             $message = "Unexpected token '{$token->getContent()}' @ ";
@@ -90,13 +92,16 @@ class Parser
         $tokenIn = $this->lexer->createTokenInput($charIn);
         $stream = new in\TokenStream($tokenIn);
 
-        $this->grammar->setLastTokenError(null);
-
         $stream->openTokenInput();
+
+        $this->lastErrorToken = null;
 
         $astNodes = $root->translate($stream);
 
         $incomplete = $stream->hasMoreTokens();
+        if ($incomplete) {
+            $this->lastErrorToken = $stream->getLastUnconsumedToken();
+        }
 
         $stream->closeTokenInput();
 
