@@ -54,9 +54,13 @@ class Terminal implements Translator
                 $ast->setAttr('id', $this->id);
             }
 
+            $this->grammar->setLastTokenError(null);
+
             return [$ast];
 
         } else {
+
+            $this->grammar->setLastTokenError($token);
 
             return false;
 

@@ -69,6 +69,20 @@ class Parser
         return $this->parse(new in\FileCharInput($filePath));
     }
 
+    public function error() : string
+    {
+        $token = $this->grammar->getLastTokenError();
+        if ($token !== null) {
+            $pos = $token->getStartPos();
+            $message = "Unexpected token '{$token->getContent()}' @ ";
+            $message .= "line {$pos->line}, column {$pos->column}";
+            return $message;
+        } else {
+            return "";
+        }
+
+    }
+
     private function parse(in\CharInput $charIn)
     {
         $root = $this->grammar->getRoot();
@@ -76,11 +90,17 @@ class Parser
         $tokenIn = $this->lexer->createTokenInput($charIn);
         $stream = new in\TokenStream($tokenIn);
 
+        $this->grammar->setLastTokenError(null);
+
         $stream->openTokenInput();
+
         $astNodes = $root->translate($stream);
+
+        $incomplete = $stream->hasMoreTokens();
+
         $stream->closeTokenInput();
 
-        return $astNodes !== false ? $astNodes[0] : false;
+        return $astNodes !== false && !$incomplete ? $astNodes[0] : false;
     }
 
 }

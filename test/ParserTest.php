@@ -35,8 +35,18 @@ CODE;
         $ast = $parser->parseString($code);
 
         self::assertNotFalse($ast);
+        print($ast->toXml() . PHP_EOL);
 
-        print(($ast)->toXml());
+        $code = "a and or";
+
+        $ast = $parser->parseString($code);
+
+        self::assertFalse($ast);
+
+        print ($parser->error() . PHP_EOL);
+
+
+        //print(($ast)->toXml());
 
     }
 

@@ -209,4 +209,9 @@ class TokenStream
         array_push($this->consumedTokens[0], $token);
     }
 
+    public function hasMoreTokens() : bool
+    {
+        return !empty($this->tokens) || $this->tokenIn->hasMoreTokens();
+    }
+
 }

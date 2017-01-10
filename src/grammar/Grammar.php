@@ -18,6 +18,9 @@ limitations under the License.
 namespace tbollmeier\parsian\grammar;
 
 
+use tbollmeier\parsian\input\Token;
+
+
 class Grammar
 {
 
@@ -25,11 +28,14 @@ class Grammar
     private $rules;
     private $root;
 
+    private $lastErrToken;
+
     public function __construct()
     {
         $this->customTerminals = [];
         $this->rules = [];
         $this->root = null;
+        $this->lastErrToken = null;
     }
 
     public function rule($name, Translator $content, bool $isRoot = false) : Rule
@@ -109,6 +115,16 @@ class Grammar
     public function getRoot() : Rule
     {
         return $this->root;
+    }
+
+    public function setLastTokenError($errToken)
+    {
+        $this->lastErrToken = $errToken;
+    }
+
+    public function getLastTokenError()
+    {
+        return $this->lastErrToken;
     }
 
 }
