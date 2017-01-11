@@ -140,9 +140,9 @@ class Ast
         $visitor->leave($this);
     }
 
-    public function toXml()
+    public function toXml($indentSize=2)
     {
-        $formatter = new XMLFormatter();
+        $formatter = new XMLFormatter($indentSize);
         $this->accept($formatter);
 
         return $formatter->getXml();

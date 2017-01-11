@@ -24,10 +24,10 @@ class XMLFormatter implements Visitor
     private $indentSize;
     private $xml;
 
-    public function __construct()
+    public function __construct($indentSize=2)
     {
         $this->offset = 0;
-        $this->indentSize = 2;
+        $this->indentSize = $indentSize;
         $xml = "";
     }
 
