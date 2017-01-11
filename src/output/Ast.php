@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright 2016 Thomas Bollmeier <entwickler@tbollmeier.de>
+Copyright 2016-2017 Thomas Bollmeier <entwickler@tbollmeier.de>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,32 +129,23 @@ class Ast
         $child->parent = $this;
     }
 
-    public function toXml()
+    public function accept(Visitor $visitor)
     {
-        $xml = "<{$this->name}";
-
-        foreach ($this->attrs as $key => $value) {
-            $xml .= " $key=\"$value\"";
-        }
-
-        if (empty($this->text) && empty($this->children)) {
-            $xml .= " />";
-            return $xml;
-        }
-
-        $xml .= ">";
-
-        if (!empty($this->text)) {
-            $xml .= $this->text;
-        }
+        $visitor->enter($this);
 
         foreach ($this->children as $child) {
-            $xml .= $child->toXml();
+            $child->accept($visitor);
         }
 
-        $xml .= "</{$this->name}>";
+        $visitor->leave($this);
+    }
 
-        return $xml;
+    public function toXml()
+    {
+        $formatter = new XMLFormatter();
+        $this->accept($formatter);
+
+        return $formatter->getXml();
     }
 
 }
