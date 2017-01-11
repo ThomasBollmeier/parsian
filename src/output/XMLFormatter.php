@@ -44,11 +44,7 @@ class XMLFormatter implements Visitor
             $xml .= " $key=\"$value\"";
         }
 
-        if (empty($ast->getText()) && empty($ast->getChildren())) {
-            $xml .= " />";
-        } else {
-            $xml .= ">";
-        }
+        $xml .= ">";
 
         if (!empty($ast->getText())) {
             $xml .= $ast->getText();
@@ -70,6 +66,7 @@ class XMLFormatter implements Visitor
         if (!empty($ast->getChildren())) {
             $this->writeln("</{$ast->getName()}>");
         }
+
     }
 
     private function writeln($text)
