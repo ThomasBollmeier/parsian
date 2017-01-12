@@ -17,6 +17,8 @@ limitations under the License.
 
 namespace tbollmeier\parsian\metagrammar;
 
+use tbollmeier\parsian\grammar\Grammar;
+use tbollmeier\parsian\output\Ast;
 use tbollmeier\parsian\Parser as PParser;
 
 
@@ -89,42 +91,42 @@ class Parser extends PParser
 
         $g->rule('metagrammar',
             $g->oneOrMore($g->alt()
-                ->add($g->ruleRef('comment'))
-                ->add($g->ruleRef('literal'))
-                ->add($g->ruleRef('symbol'))
-                ->add($g->ruleRef('token'))
-                ->add($g->ruleRef('rule'))),
+                ->add($g->ruleRef('comment_def'))
+                ->add($g->ruleRef('literal_def'))
+                ->add($g->ruleRef('symbol_def'))
+                ->add($g->ruleRef('token_def'))
+                ->add($g->ruleRef('rule_def'))),
             true);
 
-        $g->rule('comment',
+        $g->rule('comment_def',
             $g->seq()
                 ->add($g->term(self::COMMENT))
                 ->add($g->term(self::STRING)) // <-- start chars
                 ->add($g->term(self::STRING)) // <-- end chars
                 ->add($g->term(self::SEMICOLON)));
 
-        $g->rule('literal',
+        $g->rule('literal_def',
             $g->seq()
                 ->add($g->term(self::LITERAL))
                 ->add($g->term(self::STRING)) // <-- delimiter
-                ->add($g->term(self::STRING)) // <-- escape chars
+                ->add($g->opt($g->term(self::STRING, 'esc'))) // <-- escape chars
                 ->add($g->term(self::SEMICOLON)));
 
-        $g->rule('symbol',
+        $g->rule('symbol_def',
             $g->seq()
                 ->add($g->term(self::SYMBOL))
                 ->add($g->term(self::TOKEN_ID))
                 ->add($g->term(self::STRING))
                 ->add($g->term(self::SEMICOLON)));
 
-        $g->rule('token',
+        $g->rule('token_def',
             $g->seq()
                 ->add($g->term(self::TOKEN))
                 ->add($g->term(self::TOKEN_ID))
                 ->add($g->term(self::STRING))
                 ->add($g->term(self::SEMICOLON)));
 
-        $g->rule('rule',
+        $g->rule('rule_def',
             $g->seq()
                 ->add($g->opt($g->ruleRef('annot', 'root')))
                 ->add($g->term(self::ID, 'rule_name'))
@@ -170,6 +172,128 @@ class Parser extends PParser
                     ->add($g->term(self::TOKEN_ID, 'token'))
                     ->add($g->term(self::STRING, 'keyword'))));
 
+        $this->configTransforms($g);
+
+    }
+
+    private function configTransforms(Grammar $g)
+    {
+        $g->setCustomRuleAst('comment_def', function (Ast $ast)
+        {
+            $res = new Ast('comment_def');
+            $children = $ast->getChildren();
+
+            $res->addChild(new Ast('begin', $this->strip($children[1]->getText())));
+            $res->addChild(new Ast('end', $this->strip($children[2]->getText())));
+
+            return $res;
+        });
+
+        $g->setCustomRuleAst('literal_def', function (Ast $ast)
+        {
+            $res = new Ast('literal_def');
+            $children = $ast->getChildren();
+
+            $res->addChild(new Ast('delim', $this->strip($children[1]->getText())));
+            if (!empty($ast->getChildrenById('esc'))) {
+                $res->addChild(new Ast('esc', $this->strip($children[2]->getText())));
+            }
+
+            return $res;
+        });
+
+        $g->setCustomRuleAst('symbol_def', function (Ast $ast)
+        {
+            $res = new Ast('symbol_def');
+            $children = $ast->getChildren();
+
+            $res->addChild(new Ast('name', $children[1]->getText()));
+            $res->addChild(new Ast('value', $this->strip($children[2]->getText())));
+
+            return $res;
+        });
+
+        $g->setCustomRuleAst('token_def', function (Ast $ast)
+        {
+            $res = new Ast('token_def');
+            $children = $ast->getChildren();
+
+            $res->addChild(new Ast('name', $children[1]->getText()));
+            $res->addChild(new Ast('value', $this->strip($children[2]->getText())));
+
+            return $res;
+        });
+
+        $g->setCustomRuleAst('branch', function (Ast $ast)
+        {
+            $seqs = [];
+            foreach ($ast->getChildren() as $child) {
+                if ($child->getName() === 'sequence') {
+                    $seqs[] = $child;
+                }
+            }
+
+            if (count($seqs) > 1) {
+                $res = new Ast('branch');
+                foreach ($seqs as $seq) {
+                    $res->addChild($seq);
+                }
+                return $res;
+            } else {
+                return $seqs[0];
+            }
+
+        });
+
+        $g->setCustomRuleAst('atom', function (Ast $ast) {
+
+            $content = null;
+            $id = null;
+
+            foreach ($ast->getChildren() as $child) {
+                switch ($child->getId()) {
+                    case 'id':
+                        $id = $child->getText();
+                        break;
+                    case '':
+                        break;
+                    default:
+                        $content = $child;
+                        $content->clearId();
+                }
+            }
+
+            if ($id !== null) {
+                $content->addChild(new Ast('id', $id));
+            }
+
+            return $content;
+        });
+
+        $g->setCustomTermAst(self::TOKEN_ID, function (Ast $ast)
+        {
+            return $ast->getId() === 'token' ?
+                new Ast('token', $ast->getText()) : $ast;
+        });
+
+        $g->setCustomTermAst(self::ID, function (Ast $ast)
+        {
+            return $ast->getId() === 'rule' ?
+                new Ast('rule', $ast->getText()) : $ast;
+        });
+
+        $g->setCustomTermAst(self::STRING, function (Ast $ast)
+        {
+            return $ast->getId() === 'keyword' ?
+                new Ast('keyword', $this->strip($ast->getText())) : $ast;
+        });
+
+    }
+
+    private function strip($text)
+    {
+        $len = strlen($text);
+        return substr($text, 1, $len - 2);
     }
 
 }

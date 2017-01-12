@@ -34,6 +34,8 @@ Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
 
 comment '(*' '*)';
 
+literal '"';
+
 symbol PAR_OPEN '(';
 symbol PAR_CLOSE ')';
 symbol NOT '~';

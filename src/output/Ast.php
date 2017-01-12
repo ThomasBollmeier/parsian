@@ -87,6 +87,12 @@ class Ast
         }
     }
 
+    public function getId()
+    {
+        return array_key_exists('id', $this->attrs) ?
+            $this->attrs['id'] : "";
+    }
+
     /**
      * @return array
      */

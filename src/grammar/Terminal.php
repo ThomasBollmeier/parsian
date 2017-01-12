@@ -45,6 +45,10 @@ class Terminal implements Translator
             $ast = new Ast('terminal', $token->getContent());
             $ast->setAttr('type', $token->getType());
 
+            if (!empty($this->id)) {
+                $ast->setAttr('id', $this->id);
+            }
+
             $callback = $this->grammar->customTermAst($this->tokenType);
             if ($callback !== null) {
                 $ast = $callback($ast);
