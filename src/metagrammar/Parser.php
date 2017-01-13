@@ -131,7 +131,7 @@ class Parser extends PParser
                 ->add($g->opt($g->ruleRef('annot', 'root')))
                 ->add($g->term(self::ID, 'rule_name'))
                 ->add($g->term(self::ARROW))
-                ->add($g->ruleRef('branch'))
+                ->add($g->ruleRef('branch', 'content'))
                 ->add($g->term(self::SEMICOLON)));
 
         $g->rule('annot',
@@ -224,6 +224,24 @@ class Parser extends PParser
             return $res;
         });
 
+        $g->setCustomRuleAst('rule_def', function (Ast $ast) {
+            $res = new Ast('rule_def');
+
+            $name = ($ast->getChildrenById('rule_name')[0])->getText();
+            $res->addChild(new Ast('name', $name));
+
+            if (!empty($ast->getChildrenById('root'))) {
+                $res->setAttr('x-root', "true");
+            }
+
+            $content = $ast->getChildrenById('content')[0];
+            $content->clearId();
+
+            $res->addChild($content);
+
+            return $res;
+        });
+
         $g->setCustomRuleAst('branch', function (Ast $ast)
         {
             $seqs = [];
@@ -245,6 +263,45 @@ class Parser extends PParser
 
         });
 
+        $g->setCustomRuleAst('sequence', function (Ast $ast)
+        {
+            $res = new Ast('sequence');
+
+            $prev = null;
+            foreach ($ast->getChildren() as $child) {
+                if (empty($child->getId())) {
+                    $res->addChild($child);
+                    $prev = $child;
+                } else {
+                    switch ($child->getAttr('type')) {
+                        case self::ASTERISK:
+                            $mult = "many";
+                            break;
+                        case self::QUESTION_MARK:
+                            $mult = "opt";
+                            break;
+                        case self::PLUS:
+                            $mult = "one-or-more";
+                        default:
+                            $mult = "";
+                    }
+                    $prev->setAttr('x-mult', $mult);
+                }
+            }
+
+            if (count($res->getChildren()) === 1) {
+                $res = $res->getChildren()[0];
+            }
+
+            return $res;
+        });
+
+
+        $g->setCustomRuleAst('group', function (Ast $ast)
+        {
+            return $ast->getChildren()[1];
+        });
+
         $g->setCustomRuleAst('atom', function (Ast $ast) {
 
             $content = null;
@@ -264,7 +321,7 @@ class Parser extends PParser
             }
 
             if ($id !== null) {
-                $content->addChild(new Ast('id', $id));
+                $content->setAttr('x-id', $id);
             }
 
             return $content;
