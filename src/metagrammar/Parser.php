@@ -246,7 +246,7 @@ class Parser extends PParser
         {
             $seqs = [];
             foreach ($ast->getChildren() as $child) {
-                if ($child->getName() === 'sequence') {
+                if ($child->getName() !== 'terminal') {
                     $seqs[] = $child;
                 }
             }
