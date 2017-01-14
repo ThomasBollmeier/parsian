@@ -282,6 +282,7 @@ class Parser extends PParser
                             break;
                         case self::PLUS:
                             $mult = "one-or-more";
+                            break;
                         default:
                             $mult = "";
                     }

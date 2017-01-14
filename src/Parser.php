@@ -71,6 +71,15 @@ class Parser
         return $this->parse(new in\FileCharInput($filePath));
     }
 
+    /**
+     * Parse code from standard input
+     * @return Ast instance or false in case of error
+     */
+    public function parseStdin()
+    {
+        return $this->parse(new in\FileCharInput(""));
+    }
+
     public function error() : string
     {
         $token = $this->lastErrorToken;

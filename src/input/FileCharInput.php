@@ -25,7 +25,7 @@ class FileCharInput implements CharInput
     private $line_;
     private $col;
 
-    public function __construct(string $filePath)
+    public function __construct(string $filePath="")
     {
         $this->filePath = $filePath;
         $this->fp = null;
@@ -35,13 +35,20 @@ class FileCharInput implements CharInput
 
     function open()
     {
-        $this->fp = fopen($this->filePath, "r");
+        if (!empty($this->filePath)) {
+            $this->fp = fopen($this->filePath, "r");
+        } else {
+            $this->fp = STDIN;
+        }
+
     }
 
     function close()
     {
         if ($this->fp !== null) {
-            fclose($this->fp);
+            if (!empty($this->filePath)) {
+                fclose($this->fp);
+            }
             $this->fp = null;
         }
     }

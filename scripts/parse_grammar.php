@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /*
 Copyright 2017 Thomas Bollmeier <entwickler@tbollmeier.de>
@@ -19,11 +20,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $parser = new tbollmeier\parsian\metagrammar\Parser();
 
-$grammarFile = $argv[1];
-
-print ($grammarFile . "\n");
-
-$ast = $parser->parseFile($grammarFile);
+$ast = $argc > 1 ? $parser->parseFile($argv[1]) : $parser->parseStdin();
 
 if ($ast !== false) {
     print($ast->toXml());
