@@ -300,15 +300,13 @@ class TokenInputImpl implements TokenInput
 
     private function startsWithSymbol(string $text, int $startPos)
     {
-        $symInfo = null;
-
         foreach ($this->symbols as $sym) {
             if ($this->startsWith($text, $sym[0], $startPos)) {
-                $symInfo = $sym;
+                return $sym;
             }
         }
 
-        return $symInfo;
+        return null;
     }
 
     private function createToken($charInfos, $type)
