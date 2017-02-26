@@ -117,7 +117,7 @@ class CodeGenerator
 
         foreach ($this->content["literals"] as $lit) {
             $delim = $this->quoteEsc($lit["delim"]);
-            if (!empty($lit["esc"])) {
+            if (isset($lit["esc"])) {
                 $esc = $this->quoteEsc($lit["esc"]);
                 $line = "\$lexer->addStringtType(\"{$delim}\", \"{$esc}\");";
             } else {
@@ -162,6 +162,72 @@ class CodeGenerator
 
     private function genGrammarConfig()
     {
+        $this->writeln("private function configGrammar()");
+        $this->writeln("{");
+        $this->indent();
+        $this->writeln();
+        $this->writeln("\$grammar = \$this->getGrammar();");
+        $this->writeln();
+        
+        foreach ($this->content["rules"] as $rule) {
+            $ruleName = $rule["name"];
+            $elemRef = $this->elementRef($rule["content"]);
+            $isRoot = $rule["is_root"];
+            $this->writeln("\$grammar->rule(\"{$ruleName}\",");
+            $this->indent();
+            $this->writeln("{$elemRef},");
+            $this->writeln("{$isRoot});");
+            $this->dedent();
+        }
+        $this->writeln();
+        
+        $this->dedent();
+        $this->writeln("}");
+
+    }
+
+    private function elementRef($element)
+    {
+        $res = "";
+        $type = $element["type"];
+        $name = $element["name"];
+        $mult = $element["mult"];
+
+        if ($type == "alt_ref" || $type == "seq_ref") {
+            $res = "\$this->{$name}()";
+        } elseif ($type == "rule") {
+            if (isset($element["id"])) {
+                $id = $element["id"];
+                $res = "\$grammar->ruleRef(\"{$name}\", \"{$id}\")";
+            } else {
+                $res = "\$grammar->ruleRef(\"{$name}\")";
+            }
+        } elseif ($type == "token") {
+            if (isset($element["id"])) {
+                $id = $element["id"];
+                $res = "\$grammar->term(\"{$name}\", \"{$id}\")";
+            } else {
+                $res = "\$grammar->term(\"{$name}\")";
+            }
+        } elseif ($type == "keyword") {
+            $kw = strtoupper($name);
+            if (isset($element["id"])) {
+                $id = $element["id"];
+                $res = "\$grammar->term(\"{$kw}\", \"{$id}\")";
+            } else {
+                $res = "\$grammar->term(\"{$kw}\")";
+            }
+        }
+
+        if ($mult == "opt") {
+            $res = "\$grammar->opt({$res})";
+        } elseif ($mult == "many") {
+            $res = "\$grammar->many({$res})";
+        } elseif ($mult == "one-or-more") {
+            $res = "\$grammar->oneOrMore({$res})";
+        }
+
+        return $res;
 
     }
 
