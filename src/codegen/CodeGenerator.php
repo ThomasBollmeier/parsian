@@ -17,8 +17,11 @@ limitations under the License.
 
 namespace tbollmeier\parsian\codegen;
 
+use tbollmeier\parsian\output\Ast;
+use tbollmeier\parsian\output\Visitor;
 
-class CodeGenerator
+
+class CodeGenerator implements Visitor
 {
     private $namespace;
     private $parserName;
@@ -28,30 +31,23 @@ class CodeGenerator
     private $indentLevel;
     private $indentSize;
 
+    private $elemStack;
+
     public function __construct($parserName, $namespace = "")
     {
         $this->parserName = $parserName;
         $this->namespace = $namespace;
-        $this->content = [
-            "comments" => [],
-            "literals" => [],
-            "symbols" => [],
-            "tokens" => [],
-            "keywords" => [],
-            "rules" => [],
-            "alternatives" => [],
-            "sequences" => []
-        ];
-
+        $this->content = [];
+        $this->elemStack = [];
     }
 
-    public function generate($ast, Output $output=null)
+    public function generate(Ast $grammar, Output $output=null)
     {
         $this->output = $output ?: new StdOutput();
         $this->indentLevel = 0;
         $this->indentSize = 4;
 
-        $this->collectGrammarElements($ast);
+        $this->collectGrammarElements($grammar);
 
         $this->writeln("<?php");
         if (!empty($this->namespace)) {
@@ -79,9 +75,111 @@ class CodeGenerator
 
     }
 
-    private function collectGrammarElements($grammarXml)
+    private function collectGrammarElements(Ast $grammar)
     {
+        $this->content = [
+            "comments" => [],
+            "literals" => [],
+            "symbols" => [],
+            "tokens" => [],
+            "keywords" => [],
+            "rules" => [],
+            "alternatives" => [],
+            "sequences" => []
+        ];
 
+        $this->elemStack = [];
+
+        $grammar->accept($this);
+
+    }
+
+    public function enter(Ast $ast)
+    {
+        $mult = $ast->hasAttr("x-mult") ?
+            $ast->getAttr("x-mult") : null;
+
+        $name = $ast->getName();
+
+        switch ($name) {
+            case "comment_def":
+                $data = [
+                    "begin" => "",
+                    "end" => ""
+                ];
+                break;
+            case "literal_def":
+                $data = [
+                    "delim" => "",
+                    "esc" => null
+                ];
+                break;
+            case "symbol_def":
+            case "token_def":
+                $data = [
+                    "name" => "",
+                    "value" => ""
+                ];
+                break;
+            case "rule_def":
+                $isRoot = $ast->hasAttr("x-root");
+                $data = [
+                    "name" => "",
+                    "content" => null,
+                    "is_root" => $isRoot
+                ];
+                break;
+            case "branch":
+                $data = [
+                    "type" => "alt",
+                    "name" => $this->createAltName(),
+                    "choices" => [],
+                    "mult" => $mult
+                ];
+                break;
+            case "sequence":
+                $data = [
+                    "type" => "seq",
+                    "name" => $this->createSeqName(),
+                    "elements" => [],
+                    "mult" => $mult
+                ];
+                break;
+            case "token":
+            case "rule":
+            case "keyword":
+                $id = $ast->hasAttr("x-id") ?
+                    $ast->getAttr("x-id") : null;
+                $data = [
+                    "type" => $name,
+                    "name" => "",
+                    "id" => $id,
+                    "mult" => $mult
+                ];
+                break;
+            default:
+                $data = null;
+        }
+
+        $this->elemStack[] = [$name, $data];
+
+    }
+
+    public function leave(Ast $ast)
+    {
+        // TODO implement
+    }
+
+    private function createAltName() : string
+    {
+        // TODO implement
+        return "";
+    }
+
+    private function createSeqName() : string
+    {
+        // TODO implement
+        return "";
     }
 
     private function genConstructor()
@@ -233,11 +331,73 @@ class CodeGenerator
 
     private function genAlternatives()
     {
+        $alts = $this->content["alternatives"];
+        foreach ($alts as $alt) {
+            $this->genAlternative($alt);
+            $this->writeln();
+        }
+    }
+
+    private function genAlternative($alt)
+    {
+        $name = $alt["name"];
+        $this->writeln("private function {$name}()");
+        $this->writeln("{");
+        $this->indent();
+        $this->writeln("\$grammar = \$this->getGrammar();");
+        $this->writeln();
+        $this->writeln("return \$grammar->alt()");
+        $this->indent();
+        
+        $choices = $alt["choices"];
+        $numChoices = count($choices);
+        for ($i=0; $i < $numChoices; $i++) {
+            $elemRef = $this->elementRef($choices[$i]);
+            $line = "->add({$elemRef})";
+            if ($i == $numChoices - 1) {
+                $line .= ";";
+            }
+            $this->writeln($line);
+        }
+        $this->dedent();
+        $this->dedent();
+        $this->writeln("}");
 
     }
 
     private function genSequences()
     {
+        $seqs = $this->content["sequences"];
+        foreach ($seqs as $seq) {
+            $this->genSequence($seq);
+            $this->writeln();
+        }
+    }
+
+    private function genSequence($seq)
+    {
+        $name = $seq["name"];
+        $this->writeln("private function {$name}()");
+        $this->writeln("{");
+        $this->indent();
+        $this->writeln("\$grammar = \$this->getGrammar();");
+        $this->writeln();
+        $this->writeln("return \$grammar->seq()");
+        $this->indent();
+
+        $elems = $seq["elements"];
+        $numElems = count($elems);
+        for ($i=0; $i < $numElems; $i++) {
+            $elemRef = $this->elementRef($elems[$i]);
+            $line = "->add({$elemRef})";
+            if ($i == $numElems - 1) {
+                $line .= ";";
+            }
+            $this->writeln($line);
+        }
+        $this->dedent();
+        $this->dedent();
+        $this->writeln("}");
 
     }
 
