@@ -32,6 +32,8 @@ class CodeGenerator implements Visitor
     private $indentSize;
 
     private $elemStack;
+    private $nextAltId;
+    private $nextSeqId;
 
     public function __construct($parserName, $namespace = "")
     {
@@ -89,6 +91,8 @@ class CodeGenerator implements Visitor
         ];
 
         $this->elemStack = [];
+        $this->nextAltId = 1;
+        $this->nextSeqId = 1;
 
         $grammar->accept($this);
 
@@ -152,11 +156,20 @@ class CodeGenerator implements Visitor
                     $ast->getAttr("x-id") : null;
                 $data = [
                     "type" => $name,
-                    "name" => "",
+                    "name" => $ast->getText(),
                     "id" => $id,
                     "mult" => $mult
                 ];
                 break;
+            case "name":
+            case "value":
+            case "begin":
+            case "end":
+            case "delim":
+            case "esc":
+                $data = $ast->getText();
+                break;
+
             default:
                 $data = null;
         }
@@ -167,19 +180,116 @@ class CodeGenerator implements Visitor
 
     public function leave(Ast $ast)
     {
-        // TODO implement
+        list($name, $data) = array_pop($this->elemStack);
+
+        switch ($name) {
+            case "comment_def":
+                array_push($this->content["comments"], $data);
+                break;
+            case "literal_def":
+                array_push($this->content["literals"], $data);
+                break;
+            case "symbol_def":
+                array_push($this->content["symbols"], $data);
+                break;
+            case "token_def":
+                array_push($this->content["tokens"], $data);
+                break;
+            case "rule_def":
+                array_push($this->content["rules"], $data);
+                break;
+            case "branch":
+                array_push($this->content["alternatives"],
+                    $this->projection($data, ["type", "name", "choices"]));
+                $refData = $this->projection($data, ["name", "mult"]);
+                $refData["type"] = "alt_ref";
+                $this->addToContainer($refData);
+                break;
+            case "sequence":
+                array_push($this->content["sequences"],
+                    $this->projection($data, ["type", "name", "elements"]));
+                $refData = $this->projection($data, ["name", "mult"]);
+                $refData["type"] = "seq_ref";
+                $this->addToContainer($refData);
+                break;
+            case "token":
+                $this->addToContainer($data);
+                break;
+            case "rule":
+                $this->addToContainer($data);
+                break;
+            case "keyword":
+                array_push($this->content["keywords"], $data["name"]);
+                $this->addToContainer($data);
+                break;
+            case "name":
+            case "value":
+            case "begin":
+            case "end":
+            case "delim":
+            case "esc":
+                $this->setContainerComponent($name, $data);
+                break;
+
+            default:
+                $data = null;
+        }
+    }
+
+    private function projection($data, $components)
+    {
+        $projData = [];
+        foreach ($components as $component) {
+            $projData[$component] = $data[$component];
+        }
+
+        return $projData;
+    }
+
+    private function addToContainer($data)
+    {
+        $size = count($this->elemStack);
+        if ($size == 0) {
+            return;
+        }
+        list($name, $_) = $this->elemStack[$size-1];
+
+        switch ($name) {
+            case "rule_def":
+                $this->elemStack[$size-1][1]["content"] = $data;
+                break;
+            case "branch":
+                array_push($this->elemStack[$size-1][1]["choices"], $data);
+                break;
+            case "sequence":
+                array_push($this->elemStack[$size-1][1]["elements"], $data);
+                break;
+        }
+    }
+
+    private function setContainerComponent($name, $data)
+    {
+        $size = count($this->elemStack);
+        if ($size == 0) {
+            return;
+        }
+
+        $this->elemStack[$size-1][1][$name] = $data;
+
     }
 
     private function createAltName() : string
     {
-        // TODO implement
-        return "";
+        $id = $this->nextAltId;
+        $this->nextAltId++;
+        return "alt_{$id}";
     }
 
     private function createSeqName() : string
     {
-        // TODO implement
-        return "";
+        $id = $this->nextSeqId;
+        $this->nextSeqId++;
+        return "seq_{$id}";
     }
 
     private function genConstructor()
@@ -270,7 +380,7 @@ class CodeGenerator implements Visitor
         foreach ($this->content["rules"] as $rule) {
             $ruleName = $rule["name"];
             $elemRef = $this->elementRef($rule["content"]);
-            $isRoot = $rule["is_root"];
+            $isRoot = $rule["is_root"] ? "true" : "false";
             $this->writeln("\$grammar->rule(\"{$ruleName}\",");
             $this->indent();
             $this->writeln("{$elemRef},");
@@ -332,6 +442,20 @@ class CodeGenerator implements Visitor
     private function genAlternatives()
     {
         $alts = $this->content["alternatives"];
+
+        usort($alts, function ($alt1, $alt2) {
+            $name1 = $alt1["name"];
+            $name2 = $alt2["name"];
+
+            if ($name1 > $name2) {
+                return 1;
+            } elseif ($name1 < $name2) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
         foreach ($alts as $alt) {
             $this->genAlternative($alt);
             $this->writeln();
@@ -368,6 +492,20 @@ class CodeGenerator implements Visitor
     private function genSequences()
     {
         $seqs = $this->content["sequences"];
+
+        usort($seqs, function ($seq1, $seq2) {
+            $name1 = $seq1["name"];
+            $name2 = $seq2["name"];
+
+            if ($name1 > $name2) {
+                return 1;
+            } elseif ($name1 < $name2) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
         foreach ($seqs as $seq) {
             $this->genSequence($seq);
             $this->writeln();

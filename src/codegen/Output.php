@@ -24,7 +24,7 @@ abstract class Output
 
     public function writeln($text)
     {
-        $this->write($text + PHP_EOL);
+        $this->write($text . PHP_EOL);
     }
 
 }
