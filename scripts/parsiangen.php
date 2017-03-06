@@ -18,30 +18,54 @@ limitations under the License.
 
 require __DIR__ . '/../vendor/autoload.php';
 
-switch($argc) {
-    case 1:
-        $grammarPath = "";
-        $parserName = "MyParser";
-    case 2:
-        $grammarPath = $argv[1];
-        $parserName = "MyParser";
-        break;
-    case 3:
-        $grammarPath = $argv[1];
-        $parserName = $argv[2];
-        break;
-    default:
-        exit(1);
+use tbollmeier\parsian\metagrammar\Parser as GrammarParser;
+use tbollmeier\parsian\codegen\CodeGenerator;
+
+
+function argsWithoutOptions($argv)
+{
+    $args = [];
+
+    array_shift($argv);
+    while (count($argv) > 0) {
+        $arg = array_shift($argv);
+        if ($arg[0] !== "-") {
+            $args[] = $arg;
+        }
+    }
+
+    return $args;
 }
 
-$parser = new tbollmeier\parsian\metagrammar\Parser();
+function getOptValue($options, $shortName, $longName, $default)
+{
+    if (array_key_exists($shortName, $options)) {
+        return $options[$shortName];
+    } elseif (array_key_exists($longName, $options)) {
+        return $options[$longName];
+    } else {
+        return $default;
+    }
+}
+
+$short = "p:n:";
+$long = ["parser:", "namespace:"];
+$options = getopt($short, $long);
+$args = argsWithoutOptions($argv);
+
+$parserName = getOptValue($options, "p", "parser", "MyParser");
+$namespace = getOptValue($options, "n", "namespace", "");
+
+$grammarPath = empty($args) ? "" : $args[0];
+
+$parser = new GrammarParser();
 
 $ast = !empty($grammarPath) ?
     $parser->parseFile($grammarPath) :
     $parser->parseStdin();
 
 if ($ast !== false) {
-    $generator = new tbollmeier\parsian\codegen\CodeGenerator($parserName);
+    $generator = new CodeGenerator($parserName, $namespace);
     $generator->generate($ast);
 } else {
     print $parser->error();
