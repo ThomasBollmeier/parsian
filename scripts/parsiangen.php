@@ -18,8 +18,7 @@ limitations under the License.
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use tbollmeier\parsian\metagrammar\Parser as GrammarParser;
-use tbollmeier\parsian\codegen\CodeGenerator;
+use tbollmeier\parsian\codegen\Api;
 
 
 function argsWithoutOptions($argv)
@@ -58,15 +57,9 @@ $namespace = getOptValue($options, "n", "namespace", "");
 
 $grammarPath = empty($args) ? "" : $args[0];
 
-$parser = new GrammarParser();
+list($result, $error) = Api::generateParserFromGrammar(
+        $grammarPath, $parserName, $namespace);
 
-$ast = !empty($grammarPath) ?
-    $parser->parseFile($grammarPath) :
-    $parser->parseStdin();
-
-if ($ast !== false) {
-    $generator = new CodeGenerator($parserName, $namespace);
-    $generator->generate($ast);
-} else {
-    print $parser->error();
+if (!$result) {
+    print($error);
 }
