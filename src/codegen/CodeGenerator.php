@@ -327,9 +327,9 @@ class CodeGenerator implements Visitor
             $delim = $this->quoteEsc($lit["delim"]);
             if (isset($lit["esc"])) {
                 $esc = $this->quoteEsc($lit["esc"]);
-                $line = "\$lexer->addStringtType(\"{$delim}\", \"{$esc}\");";
+                $line = "\$lexer->addStringType(\"{$delim}\", \"{$esc}\");";
             } else {
-                $line = "\$lexer->addStringtType(\"{$delim}\");";
+                $line = "\$lexer->addStringType(\"{$delim}\");";
             }
             $this->writeln($line);
         }
