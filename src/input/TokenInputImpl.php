@@ -391,7 +391,9 @@ class TokenInputImpl implements TokenInput
         while ($this->charIn->hasMoreChars() && count($this->charInfoBuf) < $this->bufSize) {
             $pos = new Position($this->charIn->line(), $this->charIn->column());
             $ch = $this->charIn->nextChar();
-            $this->charInfoBuf[] = new CharInfo($ch, $pos);
+            if ($ch !== "") {
+                $this->charInfoBuf[] = new CharInfo($ch, $pos);
+            }
         }
     }
 

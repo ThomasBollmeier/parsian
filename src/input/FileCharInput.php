@@ -55,7 +55,12 @@ class FileCharInput implements CharInput
 
     function hasMoreChars() : bool
     {
-        return !feof($this->fp);
+        if (feof($this->fp)) {
+            $result = false;
+        } else {
+            $result = true;
+        }
+        return $result;
     }
 
     function nextChar() : string

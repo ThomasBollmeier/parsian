@@ -1,0 +1,25 @@
+(*
+Logical expression grammar
+Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
+*)
+
+-- Lexical elements:
+
+comment '(*' '*)';
+
+literal '"';
+
+symbol PAR_OPEN '(';
+symbol PAR_CLOSE ')';
+symbol NOT '~';
+
+token IDENT /[a-z]+/;
+
+-- Production rules
+
+@root
+disj -> conj ( 'or' conj )*;
+
+conj -> expr ( 'and' expr )*;
+
+expr -> neg#NOT? ( content#IDENT | PAR_OPEN content#disj PAR_CLOSE );

@@ -67,4 +67,17 @@ GRAMMAR;
 
     }
 
+    public function testCodeGenFromFile()
+    {
+        $parser = new Parser();
+
+        $ast = $parser->parseFile("logic.parsian");
+        self::assertNotFalse($ast, $parser->error());
+
+        $generator = new CodeGenerator("DemoParser");
+
+        $generator->generate($ast);
+
+    }
+
 }
