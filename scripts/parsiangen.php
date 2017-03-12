@@ -71,10 +71,39 @@ function getOptValue($options, $shortName, $longName, $default)
     }
 }
 
-$short = "p:n:";
-$long = ["parser:", "namespace:"];
+function printHelp()
+{
+    $help = <<<HELP
+Syntax: <path_to_php> parsiangen.php [options] <grammar_file>
+
+Generates a PHP parser class from a grammar definition file.
+
+Available options:
+    
+    -p<parserName>, --parser=<parserName>
+        set name of generated parser class to <parserName>
+    
+    -n<namespace>, --namespace=<namespace>
+        set namespace of generated parser class to <namespace>
+        
+    -h, --help: 
+        show this info
+
+
+HELP;
+    print($help);
+}
+
+$short = "p:n:h";
+$long = ["parser:", "namespace:", "help"];
 $options = getopt($short, $long);
 $args = argsWithoutOptions($argv);
+
+$help = getOptValue($options, "h", "help", "nohelp");
+if ($help !== "nohelp") {
+    printHelp();
+    exit(0);
+}
 
 $parserName = getOptValue($options, "p", "parser", "MyParser");
 $namespace = getOptValue($options, "n", "namespace", "");
