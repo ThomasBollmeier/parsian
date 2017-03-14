@@ -20,6 +20,10 @@ namespace tbollmeier\parsian\codegen;
 
 abstract class Output
 {
+    abstract public function open();
+
+    abstract public function close();
+
     abstract public function write($text);
 
     public function writeln($text)

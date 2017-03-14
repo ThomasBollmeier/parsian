@@ -43,6 +43,7 @@ spl_autoload_register(function ($qualifiedName) {
 
 
 use tbollmeier\parsian\codegen\Api;
+use tbollmeier\parsian\codegen\FileOutput;
 
 
 function argsWithoutOptions($argv)
@@ -86,6 +87,9 @@ Available options:
     -n<namespace>, --namespace=<namespace>
         set namespace of generated parser class to <namespace>
         
+    -o<parser_file>, --out=<parser_file>
+        write output to <parser_file>
+        
     -h, --help: 
         show this info
 
@@ -94,8 +98,8 @@ HELP;
     print($help);
 }
 
-$short = "p:n:h";
-$long = ["parser:", "namespace:", "help"];
+$short = "p:n:o:h";
+$long = ["parser:", "namespace:", "out:", "help"];
 $options = getopt($short, $long);
 $args = argsWithoutOptions($argv);
 
@@ -107,11 +111,14 @@ if ($help !== "nohelp") {
 
 $parserName = getOptValue($options, "p", "parser", "MyParser");
 $namespace = getOptValue($options, "n", "namespace", "");
+$parserFile = getOptValue($options, "o", "out", "");
 
 $grammarPath = empty($args) ? "" : $args[0];
 
+$output = empty($parserFile) ? null : new FileOutput($parserFile);
+
 list($result, $error) = Api::generateParserFromGrammar(
-        $grammarPath, $parserName, $namespace);
+        $grammarPath, $parserName, $namespace, $output);
 
 if (!$result) {
     print($error);

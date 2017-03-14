@@ -28,12 +28,14 @@ class Api
      * @param string $grammarFilePath path of grammar file
      * @param string $parserName name of parser class
      * @param string $namespace namespace of parser class
+     * @param Output $output output to be written to
      * @return mixed[] [true, ""] in case of success, [false, <error_message>] in error cases
      */
     static function generateParserFromGrammar(
         string $grammarFilePath,
         string $parserName="MyParser",
-        string $namespace="")
+        string $namespace="",
+        Output $output=null)
     {
         $parser = new MetaGrammarParser();
 
@@ -44,7 +46,7 @@ class Api
         if ($ast !== false) {
 
             $generator = new CodeGenerator($parserName, $namespace);
-            $generator->generate($ast);
+            $generator->generate($ast, $output);
 
             return [true, ""];
 

@@ -18,10 +18,13 @@ limitations under the License.
 namespace tbollmeier\parsian\codegen;
 
 
-class StdOutput extends Output
+class StringOutput extends Output
 {
+    private $content;
+
     public function open()
     {
+        $this->content = "";
     }
 
     public function close()
@@ -30,7 +33,12 @@ class StdOutput extends Output
 
     public function write($text)
     {
-        print($text);
+        $this->content .= $text;
+    }
+
+    public function getContent()
+    {
+        return $this->content;
     }
 
 }

@@ -18,19 +18,29 @@ limitations under the License.
 namespace tbollmeier\parsian\codegen;
 
 
-class StdOutput extends Output
+class FileOutput extends Output
 {
+    private $path;
+    private $handle;
+
+    public function __construct(string $filePath)
+    {
+        $this->path = $filePath;
+    }
+
     public function open()
     {
+        $this->handle = fopen($this->path, "w");
     }
 
     public function close()
     {
+        fclose($this->handle);
     }
 
     public function write($text)
     {
-        print($text);
+        fwrite($this->handle, $text);
     }
 
 }

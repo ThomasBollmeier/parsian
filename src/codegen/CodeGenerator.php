@@ -49,6 +49,8 @@ class CodeGenerator implements Visitor
         $this->indentLevel = 0;
         $this->indentSize = 4;
 
+        $this->output->open();
+
         $this->collectGrammarElements($grammar);
 
         $this->writeln("<?php");
@@ -74,6 +76,8 @@ class CodeGenerator implements Visitor
         $this->writeln();
         $this->dedent();
         $this->writeln("}");
+
+        $this->output->close();
 
     }
 
