@@ -213,55 +213,63 @@ class TokenInputImpl implements TokenInput
 
     private function createTokens($charInfos)
     {
-        $tokens = [];
+        if (empty($charInfos)) {
+            return [];
+        }
 
         $content = $this->getContent($charInfos);
-        $maxPos = strlen($content) - 1;
-        $lastSymPos = -1 ; // position of last symbol
-        $pos = 0;
+        $type = $this->determTokenType($content);
 
-        while ($pos <= $maxPos) {
+        if ($type !== null) {
+            return [$this->createToken($charInfos, $type)];
+        } else {
+            $data = $this->findNextSymbol($content);
+            if ($data !== null) {
 
-            $symInfo = $this->startsWithSymbol($content, $pos);
-            if ($symInfo !== null) {
-                $tokenCharInfos = $this->range($charInfos, $lastSymPos+1, $pos);
-                if (!empty($tokenCharInfos)) {
-                    $tokens[] = $this->createTerminal($tokenCharInfos);
+                list($symInfo, $pos) = $data;
+                list($seq, $symType) = $symInfo;
+                $posAfterSym = $pos + strlen($seq);
+
+                $tokens = [];
+                $left = $this->range($charInfos, 0, $pos);
+                $sym = $this->range($charInfos, $pos, $posAfterSym);
+                $right = $this->range($charInfos, $posAfterSym, count($charInfos));
+
+                if (!empty($left)) {
+                    $tokens[] = $this->createTerminal($left);
                 }
-                list($seq, $name) = $symInfo;
-                $symCharInfos = $this->range($charInfos, $pos, $pos + strlen($seq));
-                $tokens[] = $this->createToken($symCharInfos, $name);
-                $lastSymPos = $pos + strlen($seq) - 1;
-                $pos = $lastSymPos + 1;
+                $tokens[] = $this->createToken($sym, $symType);
+                $tokens = array_merge($tokens, $this->createTokens($right));
+
+                return $tokens;
 
             } else {
-                $pos++;
+                return [$this->createToken($charInfos, "terminal")];
             }
-
         }
-
-        $tokenCharInfos = $this->range($charInfos, $lastSymPos+1, $pos);
-        if (!empty($tokenCharInfos)) {
-            $tokens[] = $this->createTerminal($tokenCharInfos);
-        }
-
-        return $tokens;
 
     }
 
-    private function range($arr, int $fromIncl, int $toExcl)
-    {
-        $res = [];
-        for ($i=$fromIncl; $i < $toExcl; $i++) {
-            $res[] = $arr[$i];
+    private function findNextSymbol(string $content) {
+
+        $len = strlen($content);
+        $pos = 0;
+
+        while ($pos < $len) {
+            $symInfo = $this->startsWithSymbol($content, $pos);
+            if ($symInfo !== null) {
+                return [$symInfo, $pos];
+            }
+            $pos++;
         }
-        return $res;
+
+        return null;
+
     }
 
-    private function createTerminal($charInfos)
+    private function determTokenType(string $content)
     {
-        $content = $this->getContent($charInfos);
-        $type = "terminal";
+        $type = null;
         $found = false;
 
         foreach ($this->keywords as $kw) {
@@ -294,8 +302,25 @@ class TokenInputImpl implements TokenInput
 
         }
 
-        return $this->createToken($charInfos, $type);
+        return $type;
 
+    }
+
+    private function range($arr, int $fromIncl, int $toExcl)
+    {
+        $res = [];
+        for ($i=$fromIncl; $i < $toExcl; $i++) {
+            $res[] = $arr[$i];
+        }
+        return $res;
+    }
+
+    private function createTerminal($charInfos)
+    {
+        $content = $this->getContent($charInfos);
+        $type = $this->determTokenType($content) ?? "terminal";
+
+        return $this->createToken($charInfos, $type);
     }
 
     private function startsWithSymbol(string $text, int $startPos)

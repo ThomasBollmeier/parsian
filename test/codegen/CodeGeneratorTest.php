@@ -71,7 +71,9 @@ GRAMMAR;
     {
         $parser = new Parser();
 
-        $ast = $parser->parseFile("logic.parsian");
+        $filePath = __DIR__ . DIRECTORY_SEPARATOR . "logic.parsian";
+
+        $ast = $parser->parseFile($filePath);
         self::assertNotFalse($ast, $parser->error());
 
         $generator = new CodeGenerator("DemoParser");
