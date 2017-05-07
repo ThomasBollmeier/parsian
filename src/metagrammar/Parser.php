@@ -76,8 +76,8 @@ class Parser extends PParser
         $lexer->addKeyword("token");
         $lexer->addKeyword("symbol");
 
-        $lexer->addTerminal("/[A-Z_][A-Z0-9_]*/", self::TOKEN_ID);
-        $lexer->addTerminal("/[a-z_][a-z0-9_]*/", self::ID);
+        $lexer->addTerminal("/[A-Z][A-Z0-9_]*/", self::TOKEN_ID);
+        $lexer->addTerminal("/[a-z][a-z0-9_]*/", self::ID);
 
         $lexer->addStringType("/", "\\/"); // <-- for use in regular expressions
         $lexer->addStringType("'", "\\''");
