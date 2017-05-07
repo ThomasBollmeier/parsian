@@ -220,13 +220,6 @@ class TokenInputImpl implements TokenInput
 
         $tokenizerData = [["raw" => $charInfos, "token" => null]];
 
-        // Search for keywords:
-        foreach ($this->keywords as $keyword) {
-            $pattern = $this->createPattern($keyword, $this->caseSensitive);
-            $type = strtoupper($keyword);
-            $tokenizerData = $this->tokenizeAll($pattern, $type, $tokenizerData);
-        }
-
         // Search for terminals:
         foreach ($this->terminals as $terminal) {
             list($pattern, $type) = $terminal;
@@ -238,6 +231,11 @@ class TokenInputImpl implements TokenInput
             list($seq, $type) = $symbol;
             $pattern = $this->createPattern($seq);
             $tokenizerData = $this->tokenizeAll($pattern, $type, $tokenizerData);
+        }
+
+        // Search for keywords:
+        foreach ($this->keywords as $keyword) {
+            $this->replaceByKeyword($keyword, $tokenizerData);
         }
 
         return array_map(function($data) {
@@ -275,9 +273,11 @@ class TokenInputImpl implements TokenInput
     {
         $content = "";
 
+        /*
         if (!is_array($charInfos)) {
             var_dump($charInfos);
         }
+        */
 
         foreach ($charInfos as $cinfo) {
             $content .= $cinfo->ch;
@@ -446,7 +446,7 @@ class TokenInputImpl implements TokenInput
         return $res;
     }
 
-    private function createPattern($text, bool $caseSensitive=true)
+    private function createPattern($text)
     {
         $specialChars = ["/", "(", ")", "[", "]", "{", "}", "*", "+", "?", "|"];
         $escapedChars = array_map(function($ch) {
@@ -455,8 +455,44 @@ class TokenInputImpl implements TokenInput
 
         $pattern = str_replace($specialChars, $escapedChars, $text);
 
-        return $this->caseSensitive ?
-            "/{$pattern}/" : "/{$pattern}/i";
+        return "/{$pattern}/";
+    }
+
+    private function replaceByKeyword($keyword, &$tokenizerData)
+    {
+        $value = $this->caseSensitive ? $keyword : strtoupper($keyword);
+        $type = strtoupper($keyword);
+
+        foreach ($tokenizerData as &$data) {
+
+            $token = $data["token"];
+
+            if ($token !== null) {
+
+                $content = $token->getContent();
+                if (!$this->caseSensitive) {
+                    $content = strtoupper($content);
+                }
+                if ($content === $value) {
+                    $data["token"] = new Token($token->getContent(),
+                        $type, $token->getStartPos(), $token->getEndPos());
+                }
+
+            } else {
+
+                $content = $this->getContent($data["raw"]);
+                if (!$this->caseSensitive) {
+                    $content = strtoupper($content);
+                }
+                if ($content === $value) {
+                    $data["token"] = $this->createToken($data["raw"], $type);
+                    $data["raw"] = null;
+                }
+
+            }
+
+        }
+
     }
 
 }

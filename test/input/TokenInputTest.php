@@ -32,7 +32,7 @@ class TokenInputTest extends TestCase
 -- This is a comment
 (define answer 42)
 (define a-name "Tho\"mas")
-(define alias a-name)
+(define another-name a-name)
 CODE;
 
         $tin = $this->createLexer()->createTokenInput(new StringCharInput($code));
@@ -152,6 +152,7 @@ CODE;
         $lx->addTerminal("/[a-z][a-z0-9\\-]*/", "ID");
         $lx->addTerminal("/[1-9]\\d*/", "NUM");
         $lx->addKeyword("define");
+        $lx->addKeyword("not");
 
         return $lx;
     }
