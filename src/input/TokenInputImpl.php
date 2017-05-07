@@ -448,7 +448,8 @@ class TokenInputImpl implements TokenInput
 
     private function createPattern($text)
     {
-        $specialChars = ["/", "(", ")", "[", "]", "{", "}", "*", "+", "?", "|"];
+        $specialChars = ["/", "(", ")", "[", "]", "{", "}",
+            "*", "+", "?", "|", "^"];
         $escapedChars = array_map(function($ch) {
             return "\\".$ch;
         }, $specialChars);
