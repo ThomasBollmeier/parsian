@@ -213,96 +213,38 @@ class TokenInputImpl implements TokenInput
 
     private function createTokens($charInfos)
     {
+
         if (empty($charInfos)) {
             return [];
         }
 
-        $content = $this->getContent($charInfos);
-        $type = $this->determTokenType($content);
+        $tokenizerData = [["raw" => $charInfos, "token" => null]];
 
-        if ($type !== null) {
-            return [$this->createToken($charInfos, $type)];
-        } else {
-            $data = $this->findNextSymbol($content);
-            if ($data !== null) {
-
-                list($symInfo, $pos) = $data;
-                list($seq, $symType) = $symInfo;
-                $posAfterSym = $pos + strlen($seq);
-
-                $tokens = [];
-                $left = $this->range($charInfos, 0, $pos);
-                $sym = $this->range($charInfos, $pos, $posAfterSym);
-                $right = $this->range($charInfos, $posAfterSym, count($charInfos));
-
-                if (!empty($left)) {
-                    $tokens[] = $this->createTerminal($left);
-                }
-                $tokens[] = $this->createToken($sym, $symType);
-                $tokens = array_merge($tokens, $this->createTokens($right));
-
-                return $tokens;
-
-            } else {
-                return [$this->createToken($charInfos, "terminal")];
-            }
+        // Search for keywords:
+        foreach ($this->keywords as $keyword) {
+            $pattern = $this->createPattern($keyword, $this->caseSensitive);
+            $type = strtoupper($keyword);
+            $tokenizerData = $this->tokenizeAll($pattern, $type, $tokenizerData);
         }
 
-    }
-
-    private function findNextSymbol(string $content) {
-
-        $len = strlen($content);
-        $pos = 0;
-
-        while ($pos < $len) {
-            $symInfo = $this->startsWithSymbol($content, $pos);
-            if ($symInfo !== null) {
-                return [$symInfo, $pos];
-            }
-            $pos++;
+        // Search for terminals:
+        foreach ($this->terminals as $terminal) {
+            list($pattern, $type) = $terminal;
+            $tokenizerData = $this->tokenizeAll($pattern, $type, $tokenizerData);
         }
 
-        return null;
-
-    }
-
-    private function determTokenType(string $content)
-    {
-        $type = null;
-        $found = false;
-
-        foreach ($this->keywords as $kw) {
-
-            $matched = $this->caseSensitive ?
-                $kw === $content :
-                strtoupper($kw) === strtoupper($content);
-
-            if ($matched) {
-                $type = strtoupper($kw);
-                $found = true;
-                break;
-            }
-
+        // Search for symbols
+        foreach ($this->symbols as $symbol) {
+            list($seq, $type) = $symbol;
+            $pattern = $this->createPattern($seq);
+            $tokenizerData = $this->tokenizeAll($pattern, $type, $tokenizerData);
         }
 
-        if (!$found) {
+        return array_map(function($data) {
 
-            foreach ($this->terminals as $term) {
-                list($pattern, $name) = $term;
-                if (!preg_match($pattern, $content, $matches)) {
-                    continue;
-                }
-                if ($matches[0] !== $content) {
-                    continue;
-                }
-                $type = $name;
-                break;
-            }
+            return $data["token"] ?: $this->createToken($data["raw"], "terminal");
 
-        }
-
-        return $type;
+        }, $tokenizerData);
 
     }
 
@@ -313,25 +255,6 @@ class TokenInputImpl implements TokenInput
             $res[] = $arr[$i];
         }
         return $res;
-    }
-
-    private function createTerminal($charInfos)
-    {
-        $content = $this->getContent($charInfos);
-        $type = $this->determTokenType($content) ?? "terminal";
-
-        return $this->createToken($charInfos, $type);
-    }
-
-    private function startsWithSymbol(string $text, int $startPos)
-    {
-        foreach ($this->symbols as $sym) {
-            if ($this->startsWith($text, $sym[0], $startPos)) {
-                return $sym;
-            }
-        }
-
-        return null;
     }
 
     private function createToken($charInfos, $type)
@@ -351,6 +274,10 @@ class TokenInputImpl implements TokenInput
     private function getContent($charInfos)
     {
         $content = "";
+
+        if (!is_array($charInfos)) {
+            var_dump($charInfos);
+        }
 
         foreach ($charInfos as $cinfo) {
             $content .= $cinfo->ch;
@@ -447,5 +374,109 @@ class TokenInputImpl implements TokenInput
 
         return $consumed;
     }
+
+    private function getKeywordType(string $content)
+    {
+
+        foreach ($this->keywords as $kw) {
+
+            $matched = $this->caseSensitive ?
+                $kw === $content :
+                strtoupper($kw) === strtoupper($content);
+
+            if ($matched) {
+                return strtoupper($kw);
+            }
+
+        }
+
+        return null;
+    }
+
+    private function tokenizeAll($pattern, $type, $tokenizerData)
+    {
+        $res = [];
+
+        foreach ($tokenizerData as $data) {
+
+            if ($data["token"] !== null) {
+                $res[] = $data;
+                continue;
+            }
+
+            $charInfos = $data["raw"];
+            $content = $this->getContent($charInfos);
+
+            if (preg_match_all($pattern, $content, $matches, PREG_OFFSET_CAPTURE)) {
+
+                $findings = $matches[0];
+                $pos = 0;
+                $maxPos = count($charInfos) - 1;
+                foreach ($findings as $finding) {
+                    list($matchStr, $matchPos) = $finding;
+                    if ($matchPos > $pos) {
+                        $res[] = [
+                            "raw" => $this->range($charInfos, $pos, $matchPos),
+                            "token" => null
+                        ];
+                    }
+                    $pos = $matchPos + strlen($matchStr);
+                    $matchCharInfos = $this->range($charInfos, $matchPos, $pos);
+                    $res[] = [
+                        "raw" => null,
+                        "token" => $this->createToken($matchCharInfos, $type)
+                    ];
+                }
+
+                if ($pos <= $maxPos) {
+                    $res[] = [
+                        "raw" => $this->range($charInfos, $pos, $maxPos+1),
+                        "token" => null
+                    ];
+                }
+
+            } else {
+
+                $res[] = $data;
+
+            }
+
+        }
+
+        return $res;
+    }
+
+    private function createPattern($text, bool $caseSensitive=true)
+    {
+        $specialChars = ["/", "(", ")", "[", "]", "{", "}", "*", "+", "?", "|"];
+        $escapedChars = array_map(function($ch) {
+            return "\\".$ch;
+        }, $specialChars);
+
+        $pattern = str_replace($specialChars, $escapedChars, $text);
+
+        return $this->caseSensitive ?
+            "/{$pattern}/" : "/{$pattern}/i";
+    }
+
+}
+
+interface Mode
+{
+
+}
+
+class NormalMode implements Mode
+{
+
+}
+
+class CommentMode implements Mode
+{
+
+}
+
+class StringMode implements Mode
+{
 
 }

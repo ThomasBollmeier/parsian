@@ -31,7 +31,8 @@ class TokenInputTest extends TestCase
         $code = <<<CODE
 -- This is a comment
 (define answer 42)
-(define name "Tho\"mas")
+(define a-name "Tho\"mas")
+(define alias a-name)
 CODE;
 
         $tin = $this->createLexer()->createTokenInput(new StringCharInput($code));
@@ -46,7 +47,7 @@ CODE;
 
         $tin->close();
 
-        $this->assertEquals(10, count($tokens));
+        $this->assertEquals(15, count($tokens));
         $this->assertEquals("PAR_OPEN", $tokens[0]->getType());
         $this->assertEquals("DEFINE", $tokens[1]->getType());
         $this->assertEquals("ID", $tokens[2]->getType());
@@ -58,6 +59,11 @@ CODE;
         $this->assertEquals("STRING", $tokens[8]->getType());
         $this->assertEquals('"Tho\\"mas"', $tokens[8]->getContent());
         $this->assertEquals("PAR_CLOSE", $tokens[9]->getType());
+        $this->assertEquals("PAR_OPEN", $tokens[10]->getType());
+        $this->assertEquals("DEFINE", $tokens[11]->getType());
+        $this->assertEquals("ID", $tokens[12]->getType());
+        $this->assertEquals("ID", $tokens[13]->getType());
+        $this->assertEquals("PAR_CLOSE", $tokens[14]->getType());
 
     }
 
@@ -142,6 +148,7 @@ CODE;
         $lx->addStringType('"', '\"');
         $lx->addSymbol("(", "PAR_OPEN");
         $lx->addSymbol(")", "PAR_CLOSE");
+        $lx->addSymbol("-", "MINUS");
         $lx->addTerminal("/[a-z][a-z0-9\\-]*/", "ID");
         $lx->addTerminal("/[1-9]\\d*/", "NUM");
         $lx->addKeyword("define");
