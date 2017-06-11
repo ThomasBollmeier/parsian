@@ -137,13 +137,17 @@ class Ast
 
     public function accept(Visitor $visitor)
     {
-        $visitor->enter($this);
+        $stopped = $visitor->enter($this);
+        if ($stopped === true) return $stopped;
 
         foreach ($this->children as $child) {
-            $child->accept($visitor);
+            $stopped = $child->accept($visitor);
+            if ($stopped === true) return $stopped;
         }
 
         $visitor->leave($this);
+
+        return false; // false = no stop requested
     }
 
     public function toXml($indentSize=2)
