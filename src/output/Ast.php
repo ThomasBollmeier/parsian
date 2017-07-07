@@ -135,6 +135,25 @@ class Ast
         $child->parent = $this;
     }
 
+    public function replaceChild(Ast $oldChild, Ast $newChild=null)
+    {
+        $pos = 0;
+        foreach ($this->children as $child) {
+            if ($child === $oldChild) {
+                $child->parent = null;
+                if ($newChild !== null) {
+                    $this->children[$pos] = $newChild;
+                    $newChild->parent = $this;
+                } else {
+                    unset($this->children[$pos]);
+                    $this->children = array_values($this->children);
+                }
+                break;
+            }
+            $pos++;
+        }
+    }
+
     public function accept(Visitor $visitor)
     {
         $stopped = $visitor->enter($this);
