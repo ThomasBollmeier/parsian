@@ -33,6 +33,11 @@ class Ast
     {
         return $this->name;
     }
+    
+    public function setName($name) 
+    {
+        $this->name = $name;
+    }
 
     /**
      * @return string
@@ -61,6 +66,17 @@ class Ast
     public function getChildren(): array
     {
         return $this->children;
+    }
+    
+    public function getChildrenByName($name) {
+        $res = [];
+        foreach ($this->children as $child) {
+            if ($child->getName() === $name) {
+                $res[] = $child;
+            }
+        }
+
+        return $res;
     }
 
     public function getChildrenById($id) : array

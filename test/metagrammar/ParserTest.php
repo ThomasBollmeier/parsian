@@ -58,8 +58,54 @@ GRAMMAR;
         $ast = $parser->parseString($grammar);
         self::assertNotFalse($ast, $parser->error());
 
-        print ($ast->toXml());
+        //print ($ast->toXml());
 
     }
+    
+    public function testExpressionsWithTransformations() {
+        
+        $grammar = <<<GRAMMAR
+(* 
+Logical expression grammar
+Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
+*)
+
+-- Lexical elements:
+
+comment '(*' '*)';
+
+literal '"';
+
+symbol PAR_OPEN '(';
+symbol PAR_CLOSE ')';
+symbol NOT '~';
+
+token IDENT /[a-z]+/;
+
+-- Production rules
+
+@root
+disj -> sub#conj ( 'or' sub#conj )* 
+=> {
+    :name #sub.text
+    :children #sub
+};
+
+conj -> expr ( 'and' expr )*;
+
+expr -> neg#NOT? ( content#IDENT | PAR_OPEN content#disj PAR_CLOSE );
+
+GRAMMAR;
+
+        $parser = new Parser();
+
+        $ast = $parser->parseString($grammar);
+        self::assertNotFalse($ast, $parser->error());
+
+        print ($ast->toXml());
+
+        
+    }
+    
 
 }

@@ -39,7 +39,7 @@ class RuleRef implements Translator
         $astNodes = $rule->translate($stream);
 
         if ($astNodes !== false && !empty($this->id)) {
-            ($astNodes[0])->setAttr('id', $this->id);
+            $astNodes[0]->setAttr('id', $this->id);
         }
 
         return $astNodes;

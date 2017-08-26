@@ -40,7 +40,8 @@ CODE;
 
         self::assertNotFalse($nodes);
 
-        print(($nodes[0])->toXml());
+        $node = $nodes[0];
+        print($node->toXml());
 
     }
 
@@ -49,10 +50,10 @@ CODE;
         $g = new Grammar();
 
         $disj = $g->rule("disj",
-            ($g->seq())
+            $g->seq()
                 ->add($g->ruleRef("conj", "elem"))
                 ->add($g->many(
-                    ($g->seq())
+                    $g->seq()
                         ->add($g->term("OR"))
                         ->add($g->ruleRef("conj", "elem")))), true);
 
@@ -74,10 +75,10 @@ CODE;
         });
 
         $conj = $g->rule("conj",
-            ($g->seq())
+            $g->seq()
                 ->add($g->ruleRef("expr", "elem"))
                 ->add($g->many(
-                    ($g->seq())
+                    $g->seq()
                         ->add($g->term("AND"))
                         ->add($g->ruleRef("expr", "elem")))));
 
@@ -99,11 +100,11 @@ CODE;
         });
 
         $expr = $g->rule("expr",
-            ($g->seq())
+            $g->seq()
                 ->add($g->opt($g->term("NOT", "neg")))
-                ->add(($g->alt())
+                ->add($g->alt()
                     ->add($g->term("IDENT", "content"))
-                    ->add(($g->seq())
+                    ->add($g->seq()
                             ->add($g->term("PAR_OPEN"))
                             ->add($g->ruleRef("disj", "content"))
                             ->add($g->term("PAR_CLOSE")))));
