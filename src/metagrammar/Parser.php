@@ -385,6 +385,8 @@ class Parser extends PParser
                 ->add($g->term(self::FAT_ARROW))
                 ->add($g->alt()
                     ->add($g->ruleRef('trans_node'))
+                    ->add($g->ruleRef('trans_id_ref'))
+                    ->add($g->ruleRef('trans_name_ref'))
                     ->add($g->term(self::CHILD)));
     }
     
@@ -452,11 +454,19 @@ class Parser extends PParser
         $g->setCustomRuleAst('transformation', function (Ast $ast) {
             $transNode = $ast->getChildren()[1];
             $transNode->clearId();
-            $useChild = $transNode->getName() === "child";
-            $transNode->setName("transformed_node");
-            if ($useChild) {
-                $transNode->setAttr("use-child", "true");
+            switch ($transNode->getName()) {
+                case "child":
+                    $transNode->setAttr("use-child", "true");
+                    break;
+                case "idref":
+                    $transNode->setAttr("idref", "true");
+                    break;
+                case "nameref":
+                    $transNode->setAttr("nameref", "true");
+                    break;
             }
+            $transNode->setName("transformed_node");
+
             return $transNode;
         });
 

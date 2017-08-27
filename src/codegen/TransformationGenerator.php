@@ -43,16 +43,24 @@ class TransformationGenerator
 
     private function genBody(Page $page)
     {
-        if (!$this->transNode->hasAttr('use-child')) {
-
-            $this->varCounter = 0;
-            $this->genNewNode("\$res", $this->transNode, $page);
-            $page->writeln("return \$res;");
-
-        } else {
+        if ($this->transNode->hasAttr('use-child')) {
             $page->writeln("\$child = \$ast->getChildren()[0];");
             $page->writeln("\$child->clearId();");
             $page->writeln("return \$child;");
+        } else if ($this->transNode->hasAttr('idref')) {
+            $id = $this->transNode->getText();
+            $page->writeln("\$child = \$ast->getChildrenById(\"{$id}\")[0];");
+            $page->writeln("\$child->clearId();");
+            $page->writeln("return \$child;");
+        } else if ($this->transNode->hasAttr('nameref')) {
+            $name = $this->transNode->getText();
+            $page->writeln("\$child = \$ast->getChildrenByName(\"{$name}\")[0];");
+            $page->writeln("\$child->clearId();");
+            $page->writeln("return \$child;");
+        } else {
+            $this->varCounter = 0;
+            $this->genNewNode("\$res", $this->transNode, $page);
+            $page->writeln("return \$res;");
         }
     }
 
