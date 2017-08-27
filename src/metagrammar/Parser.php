@@ -54,6 +54,7 @@ class Parser extends PParser
     const KEY_KEY = "KEY";
     const KEY_VALUE = "VALUE";
     const COLON = "COLON";
+    const CHILD = "CHILD";
     const DOT = "DOT";
 
 
@@ -100,6 +101,7 @@ class Parser extends PParser
         $lexer->addKeyword("text");
         $lexer->addKeyword("attrs");
         $lexer->addKeyword("children");
+        $lexer->addKeyword("child");
         $lexer->addKeyword("key");
         $lexer->addKeyword("value");
 
@@ -208,18 +210,21 @@ class Parser extends PParser
     
     private function transformRule(Grammar $g) 
     {
+        $g->setCustomTermAst(self::CHILD, function(Ast $ast) {
+            return new Ast("child");
+        });
+
         $g->rule('trans_member',
             $g->seq()
                 ->add($g->alt()
                     ->add($g->ruleRef('trans_id_ref', 'obj'))
-                    ->add($g->ruleRef('trans_name_ref', 'obj')))
+                    ->add($g->ruleRef('trans_name_ref', 'obj'))
+                    ->add($g->term(self::CHILD)))
                 ->add($g->term(self::DOT))
                 ->add($g->alt()
                     ->add($g->term(self::KEY_NAME, 'field'))
-                    ->add($g->term(self::KEY_TEXT, 'field'))
-                    ->add($g->term(self::KEY_ATTRS, 'field'))
-                    ->add($g->term(self::KEY_CHILDREN, 'field'))));
-        
+                    ->add($g->term(self::KEY_TEXT, 'field'))));
+
         $g->setCustomRuleAst('trans_member', function (Ast $ast) {
            
             $res = new Ast("member");
@@ -260,7 +265,7 @@ class Parser extends PParser
         
         $g->setCustomRuleAst('trans_id_ref', function(Ast $ast) {
             $children = $ast->getChildren();
-            return new Ast("id", $children[1]->getText());
+            return new Ast("idref", $children[1]->getText());
         });
  
         $g->rule('trans_name_ref', 
@@ -270,7 +275,7 @@ class Parser extends PParser
 
         $g->setCustomRuleAst('trans_name_ref', function(Ast $ast) {
             $children = $ast->getChildren();
-            return new Ast("names", $children[1]->getText());
+            return new Ast("nameref", $children[1]->getText());
         });
         
         $g->rule('trans_node_list', 
@@ -279,7 +284,10 @@ class Parser extends PParser
                 ->add($g->ruleRef('trans_name_ref', 'names'))
                 ->add($g->seq()
                     ->add($g->term(self::SQB_OPEN))
-                    ->add($g->oneOrMore($g->ruleRef('trans_node', 'node')))
+                    ->add($g->oneOrMore($g->alt()
+                        ->add($g->ruleRef('trans_node', 'node'))
+                        ->add($g->ruleRef('trans_id_ref', 'node'))
+                        ->add($g->ruleRef('trans_name_ref', 'node'))))
                     ->add($g->term(self::SQB_CLOSE))));
         
         $g->setCustomRuleAst('trans_node_list', function (Ast $ast) {
@@ -288,7 +296,9 @@ class Parser extends PParser
             if (count($children) != 1) {
                 $res = new Ast("nodes");
                 foreach ($ast->getChildrenById("node") as $node) {
-                    $node->setName("node");
+                    if ($node->getName() === "trans_node") {
+                        $node->setName("node");
+                    }
                     $node->clearId();
                     $res->addChild($node);
                 }
@@ -298,7 +308,39 @@ class Parser extends PParser
             }
             return $res;
         });
-                
+
+        $g->rule('trans_attr',
+            $g->seq()
+                ->add($g->term(self::BRACE_OPEN))
+                ->add($g->term(self::COLON))
+                ->add($g->term(self::KEY_KEY))
+                ->add($g->term(self::STRING, 'key'))
+                ->add($g->term(self::COLON))
+                ->add($g->term(self::KEY_VALUE))
+                ->add($g->term(self::STRING, 'value'))
+                ->add($g->term(self::BRACE_CLOSE)));
+
+        $g->setCustomRuleAst('trans_attr', function (Ast $ast) {
+            $res = new Ast("attr");
+            $res->addChild(new Ast("key", $ast->getChildrenById("key")[0]->getText()));
+            $res->addChild(new Ast("value", $ast->getChildrenById("value")[0]->getText()));
+            return $res;
+        });
+
+        $g->rule('trans_attr_list',
+            $g->seq()
+                ->add($g->term(self::SQB_OPEN))
+                ->add($g->oneOrMore($g->ruleRef('trans_attr', 'attr')))
+                ->add($g->term(self::SQB_CLOSE)));
+
+        $g->setCustomRuleAst('trans_attr_list', function (Ast $ast){
+            $res = new Ast('attrs');
+            foreach ($ast->getChildrenById("attr") as $attr) {
+                $attr->clearId();
+                $res->addChild($attr);
+            }
+            return $res;
+        });
                 
         $g->rule('trans_node', 
             $g->seq()
@@ -314,7 +356,8 @@ class Parser extends PParser
                                 ->add($g->ruleRef('trans_simple_val', 'text')))
                         ->add($g->seq()
                                 ->add($g->term(self::COLON))
-                                ->add($g->term(self::KEY_ATTRS)))
+                                ->add($g->term(self::KEY_ATTRS))
+                                ->add($g->ruleRef('trans_attr_list', 'attrs')))
                         ->add($g->seq()
                                 ->add($g->term(self::COLON))
                                 ->add($g->term(self::KEY_CHILDREN))
@@ -327,6 +370,12 @@ class Parser extends PParser
             
             $this->addKeyValueNode($ast, $res, "name", "name");
             $this->addKeyValueNode($ast, $res, "text", "text");
+            $attrs = $ast->getChildrenById('attrs');
+            if (!empty($attrs)) {
+                $attrs = $attrs[0];
+                $attrs->clearId();
+                $res->addChild($attrs);
+            }
             $this->addKeyValueNode($ast, $res, "children", "children");
             
             return $res;
@@ -334,7 +383,9 @@ class Parser extends PParser
         
         return $g->seq()
                 ->add($g->term(self::FAT_ARROW))
-                ->add($g->ruleRef('trans_node'));
+                ->add($g->alt()
+                    ->add($g->ruleRef('trans_node'))
+                    ->add($g->term(self::CHILD)));
     }
     
     private function addKeyValueNode($ast, $newAst, $key, $valueId) {
@@ -401,7 +452,11 @@ class Parser extends PParser
         $g->setCustomRuleAst('transformation', function (Ast $ast) {
             $transNode = $ast->getChildren()[1];
             $transNode->clearId();
+            $useChild = $transNode->getName() === "child";
             $transNode->setName("transformed_node");
+            if ($useChild) {
+                $transNode->setAttr("use-child", "true");
+            }
             return $transNode;
         });
 

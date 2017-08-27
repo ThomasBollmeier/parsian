@@ -85,10 +85,11 @@ token IDENT /[a-z]+/;
 -- Production rules
 
 @root
-disj -> sub#conj ( 'or' sub#conj )* 
-=> {
-    :name #sub.text
-    :children #sub
+disj -> left#conj ( 'or' right#conj )* 
+=>
+{
+    :name "or"
+    :children [#left #right]
 };
 
 conj -> expr ( 'and' expr )*;

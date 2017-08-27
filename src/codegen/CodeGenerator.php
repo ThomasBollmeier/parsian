@@ -28,12 +28,13 @@ class CodeGenerator implements Visitor
     private $content;
 
     private $output;
-    private $indentLevel;
-    private $indentSize;
+    private $page;
 
     private $elemStack;
     private $nextAltId;
     private $nextSeqId;
+
+    private $stopVisiting;
 
     public function __construct($parserName, $namespace = "")
     {
@@ -46,9 +47,7 @@ class CodeGenerator implements Visitor
     public function generate(Ast $grammar, Output $output=null)
     {
         $this->output = $output ?: new StdOutput();
-        $this->indentLevel = 0;
-        $this->indentSize = 4;
-
+        $this->page = new Page($this->output);
         $this->output->open();
 
         $this->collectGrammarElements($grammar);
@@ -59,6 +58,9 @@ class CodeGenerator implements Visitor
         }
         $this->writeln();
         $this->writeln("use tbollmeier\\parsian as parsian;");
+        if (!empty($this->content["transforms"])) {
+            $this->writeln("use tbollmeier\\parsian\\output\\Ast;");
+        }
         $this->writeln();
         $this->writeln();
         $this->writeln("class {$this->parserName} extends parsian\\Parser");
@@ -91,19 +93,25 @@ class CodeGenerator implements Visitor
             "keywords" => [],
             "rules" => [],
             "alternatives" => [],
-            "sequences" => []
+            "sequences" => [],
+            "transforms" => []
         ];
 
         $this->elemStack = [];
         $this->nextAltId = 1;
         $this->nextSeqId = 1;
 
+        $this->stopVisiting = "";
         $grammar->accept($this);
 
     }
 
     public function enter(Ast $ast)
     {
+        if (!empty($this->stopVisiting)) {
+            return;
+        }
+
         $mult = $ast->hasAttr("x-mult") ?
             $ast->getAttr("x-mult") : null;
 
@@ -174,6 +182,14 @@ class CodeGenerator implements Visitor
                 $data = $ast->getText();
                 break;
 
+            case "transformed_node":
+                // transformation rule
+                list($_, $data) = $this->elemStack[count($this->elemStack)-1];
+                $ruleName = $data["name"];
+                $this->stopVisiting = $name;
+                $this->content["transforms"][$ruleName] = new TransformationGenerator($ruleName, $ast);
+                return;
+
             default:
                 $data = null;
         }
@@ -184,7 +200,12 @@ class CodeGenerator implements Visitor
 
     public function leave(Ast $ast)
     {
-        list($name, $data) = array_pop($this->elemStack);
+        if ($ast->getName() !== $this->stopVisiting) {
+            list($name, $data) = array_pop($this->elemStack);
+        } else {
+            $this->stopVisiting = "";
+            return;
+        }
 
         switch ($name) {
             case "comment_def":
@@ -382,6 +403,7 @@ class CodeGenerator implements Visitor
         $this->writeln();
         
         foreach ($this->content["rules"] as $rule) {
+
             $ruleName = $rule["name"];
             $elemRef = $this->elementRef($rule["content"]);
             $isRoot = $rule["is_root"] ? "true" : "false";
@@ -390,6 +412,14 @@ class CodeGenerator implements Visitor
             $this->writeln("{$elemRef},");
             $this->writeln("{$isRoot});");
             $this->dedent();
+
+            if (array_key_exists($ruleName, $this->content["transforms"])) {
+                $transGenerator = $this->content["transforms"][$ruleName];
+                $this->writeln();
+                $transGenerator->genTransformation($this->page);
+                $this->writeln();
+            }
+
         }
         $this->writeln();
         
@@ -545,26 +575,17 @@ class CodeGenerator implements Visitor
 
     private function writeln($text="")
     {
-        if (!empty($text)) {
-            $padding = "";
-            for ($i=0; $i<$this->indentLevel; $i++) {
-                $padding .= " ";
-            }
-            $this->output->writeln($padding . $text);
-        } else {
-            $this->output->writeln($text);
-        }
-
+        $this->page->writeln($text);
     }
 
     public function indent()
     {
-        $this->indentLevel += $this->indentSize;
+        $this->page->indent();
     }
 
     public function dedent()
     {
-        $this->indentLevel -= $this->indentSize;
+        $this->page->dedent();
     }
 
 }

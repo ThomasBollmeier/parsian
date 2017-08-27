@@ -48,7 +48,12 @@ token IDENT /[a-z]+/;
 -- Production rules
 
 @root
-disj -> conj ( 'or' conj )*;
+disj -> left#conj ( 'or' right#conj )* => 
+{
+    :name "OR"
+    :attrs [{:key "category" :value "logic-expr"}]
+    :children [#left #right {:name "demo" :children .conj}]
+};
 
 conj -> expr ( 'and' expr )*;
 
