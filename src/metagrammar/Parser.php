@@ -211,6 +211,7 @@ class Parser extends PParser
                 ->add($g->term(self::KEY_TEXT))
                 ->add($g->term(self::KEY_ATTRS))
                 ->add($g->term(self::KEY_CHILDREN))
+                ->add($g->term(self::KEY_KEY))
                 ->add($g->term(self::KEY_VALUE))
                 ->add($g->term(self::CHILD)));
 
