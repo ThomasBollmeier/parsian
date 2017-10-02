@@ -96,6 +96,8 @@ conj -> expr ( 'and' expr )*;
 
 expr -> neg#NOT? ( content#IDENT | PAR_OPEN content#disj PAR_CLOSE );
 
+fun -> 'fn' name#IDENT PAR_OPEN PAR_CLOSE;
+
 GRAMMAR;
 
         $parser = new Parser();

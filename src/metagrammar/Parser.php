@@ -160,7 +160,7 @@ class Parser extends PParser
         $g->rule('rule_def',
             $g->seq()
                 ->add($g->opt($g->ruleRef('annot', 'root')))
-                ->add($g->term(self::ID, 'rule_name'))
+                ->add($g->ruleRef('id', 'rule_name'))
                 ->add($g->term(self::ARROW))
                 ->add($g->ruleRef('branch', 'content'))
                 ->add($g->opt($g->ruleRef('transformation', 'trans')))
@@ -197,12 +197,22 @@ class Parser extends PParser
         $g->rule('atom',
             $g->seq()
                 ->add($g->opt($g->seq()
-                    ->add($g->term(self::ID, 'id'))
+                    ->add($g->ruleRef('id', 'id'))
                     ->add($g->term(self::HASH))))
                 ->add($g->alt()
-                    ->add($g->term(self::ID, 'rule'))
+                    ->add($g->ruleRef('id', 'rule'))
                     ->add($g->term(self::TOKEN_ID, 'token'))
                     ->add($g->term(self::STRING, 'keyword'))));
+                
+        $g->rule('id',
+            $g->alt()
+                ->add($g->term(self::ID))
+                ->add($g->term(self::KEY_NAME))
+                ->add($g->term(self::KEY_TEXT))
+                ->add($g->term(self::KEY_ATTRS))
+                ->add($g->term(self::KEY_CHILDREN))
+                ->add($g->term(self::KEY_VALUE))
+                ->add($g->term(self::CHILD)));
 
         $this->configTransforms($g);
 
@@ -568,6 +578,10 @@ class Parser extends PParser
                     case 'id':
                         $id = $child->getText();
                         break;
+                    case 'rule':
+                        $content = $child;
+                        $content->setName("rule");
+                        $content->clearId();
                     case '':
                         break;
                     default:
@@ -581,6 +595,11 @@ class Parser extends PParser
             }
 
             return $content;
+        });
+
+        $g->setCustomRuleAst('id', function (Ast $ast) {
+            $child = $ast->getChildren()[0];
+            return new Ast("id", $child->getText());
         });
 
         $g->setCustomTermAst(self::TOKEN_ID, function (Ast $ast)
