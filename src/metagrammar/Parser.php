@@ -272,7 +272,7 @@ class Parser extends PParser
         $g->rule('trans_id_ref', 
             $g->seq()
                 ->add($g->term(self::HASH))
-                ->add($g->term(self::ID)));
+                ->add($g->ruleRef('id')));
         
         $g->setCustomRuleAst('trans_id_ref', function(Ast $ast) {
             $children = $ast->getChildren();
@@ -282,7 +282,7 @@ class Parser extends PParser
         $g->rule('trans_name_ref', 
             $g->seq()
                 ->add($g->term(self::DOT))
-                ->add($g->term(self::ID)));
+                ->add($g->ruleRef('id')));
 
         $g->setCustomRuleAst('trans_name_ref', function(Ast $ast) {
             $children = $ast->getChildren();
