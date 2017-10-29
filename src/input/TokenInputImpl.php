@@ -108,7 +108,7 @@ class TokenInputImpl implements TokenInput
 
             $content = $this->bufString();
 
-            if (empty($content)) {
+            if (strlen($content) === 0) {
                 break;
             }
 
