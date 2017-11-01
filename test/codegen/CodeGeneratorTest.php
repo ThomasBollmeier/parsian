@@ -59,6 +59,16 @@ conj -> expr ( 'and' expr )*;
 
 expr -> neg#NOT? ( content#IDENT | PAR_OPEN content#disj PAR_CLOSE );
 
+dict -> PAR_OPEN key_value* PAR_CLOSE => {
+    :name "dict"
+    :children #key_value
+};
+
+key_value -> key#IDENT value#expr => {
+    :name "entry"
+    :children [{:name "key" :text #key.text } #value]
+};
+
 GRAMMAR;
 
         $parser = new Parser();

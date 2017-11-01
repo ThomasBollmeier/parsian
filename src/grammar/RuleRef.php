@@ -37,7 +37,7 @@ class RuleRef implements Translator
     {
         $rule = $this->grammar->getRule($this->name);
         $astNodes = $rule->translate($stream);
-
+        
         if ($astNodes !== false && !empty($this->id)) {
             $astNodes[0]->setAttr('id', $this->id);
         }
