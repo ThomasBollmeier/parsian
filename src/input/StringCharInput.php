@@ -51,7 +51,7 @@ class StringCharInput implements CharInput
     {
         $char = $this->text[$this->pos];
         $this->pos++;
-        if ($char !== PHP_EOL) {
+        if ($char !== "\n") {
             $this->col += 1;
         } else {
             $this->col = 1;

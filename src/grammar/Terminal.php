@@ -38,12 +38,12 @@ class Terminal implements Translator
     public function translate(TokenStream $stream)
     {
         $token = $stream->lookup();
-        if ($token && $token->getType() === $this->tokenType) {
+        if ($token && $token->matchesType($this->tokenType)) {
 
             $stream->consume();
 
             $ast = new Ast('terminal', $token->getContent());
-            $ast->setAttr('type', $token->getType());
+            $ast->setAttr('type', $this->tokenType);
 
             if (!empty($this->id)) {
                 $ast->setAttr('id', $this->id);

@@ -48,23 +48,28 @@ CODE;
         $tin->close();
 
         $this->assertEquals(15, count($tokens));
-        $this->assertEquals("PAR_OPEN", $tokens[0]->getType());
-        $this->assertEquals("DEFINE", $tokens[1]->getType());
-        $this->assertEquals("ID", $tokens[2]->getType());
-        $this->assertEquals("NUM", $tokens[3]->getType());
-        $this->assertEquals("PAR_CLOSE", $tokens[4]->getType());
-        $this->assertEquals("PAR_OPEN", $tokens[5]->getType());
-        $this->assertEquals("DEFINE", $tokens[6]->getType());
-        $this->assertEquals("ID", $tokens[7]->getType());
-        $this->assertEquals("STRING", $tokens[8]->getType());
+        $this->checkToken("PAR_OPEN", $tokens[0]);
+        $this->checkToken("DEFINE", $tokens[1]);
+        $this->checkToken("ID", $tokens[2]);
+        $this->checkToken("NUM", $tokens[3]);
+        $this->checkToken("PAR_CLOSE", $tokens[4]);
+        $this->checkToken("PAR_OPEN", $tokens[5]);
+        $this->checkToken("DEFINE", $tokens[6]);
+        $this->checkToken("ID", $tokens[7]);
+        $this->checkToken("STRING", $tokens[8]);
         $this->assertEquals('"Tho\\"mas"', $tokens[8]->getContent());
-        $this->assertEquals("PAR_CLOSE", $tokens[9]->getType());
-        $this->assertEquals("PAR_OPEN", $tokens[10]->getType());
-        $this->assertEquals("DEFINE", $tokens[11]->getType());
-        $this->assertEquals("ID", $tokens[12]->getType());
-        $this->assertEquals("ID", $tokens[13]->getType());
-        $this->assertEquals("PAR_CLOSE", $tokens[14]->getType());
+        $this->checkToken("PAR_CLOSE", $tokens[9]);
+        $this->checkToken("PAR_OPEN", $tokens[10]);
+        $this->checkToken("DEFINE", $tokens[11]);
+        $this->checkToken("ID", $tokens[12]);
+        $this->checkToken("ID", $tokens[13]);
+        $this->checkToken("PAR_CLOSE", $tokens[14]);
 
+    }
+
+    private function checkToken($expectedType, $token)
+    {
+        $this->assertTrue($token->matchesType($expectedType));
     }
 
     public function testTokenInputFromFile()
@@ -84,17 +89,17 @@ CODE;
         $tin->close();
 
         $this->assertEquals(10, count($tokens));
-        $this->assertEquals("PAR_OPEN", $tokens[0]->getType());
-        $this->assertEquals("DEFINE", $tokens[1]->getType());
-        $this->assertEquals("ID", $tokens[2]->getType());
-        $this->assertEquals("NUM", $tokens[3]->getType());
-        $this->assertEquals("PAR_CLOSE", $tokens[4]->getType());
-        $this->assertEquals("PAR_OPEN", $tokens[5]->getType());
-        $this->assertEquals("DEFINE", $tokens[6]->getType());
-        $this->assertEquals("ID", $tokens[7]->getType());
-        $this->assertEquals("STRING", $tokens[8]->getType());
+        $this->checkToken("PAR_OPEN", $tokens[0]);
+        $this->checkToken("DEFINE", $tokens[1]);
+        $this->checkToken("ID", $tokens[2]);
+        $this->checkToken("NUM", $tokens[3]);
+        $this->checkToken("PAR_CLOSE", $tokens[4]);
+        $this->checkToken("PAR_OPEN", $tokens[5]);
+        $this->checkToken("DEFINE", $tokens[6]);
+        $this->checkToken("ID", $tokens[7]);
+        $this->checkToken("STRING", $tokens[8]);
         $this->assertEquals('"Tho\\"mas"', $tokens[8]->getContent());
-        $this->assertEquals("PAR_CLOSE", $tokens[9]->getType());
+        $this->checkToken("PAR_CLOSE", $tokens[9]);
 
     }
 
@@ -109,20 +114,18 @@ CODE;
         $tokenInput = $lexer->createTokenInput(new StringCharInput($code));
 
         $tokens = $this->getTokens($tokenInput);
-        $tokenTypes = array_map(function($token) { return $token->getType(); }, $tokens);
 
-        $this->assertEquals(5, count($tokenTypes));
-        $this->assertEquals("terminal", $tokenTypes[1]);
+        $this->assertEquals(5, count($tokens));
+        $this->assertTrue($tokens[1]->matchesType("terminal"));
 
         $lexer->setCaseSensitive(false);
 
         $tokenInput = $lexer->createTokenInput(new StringCharInput($code));
 
         $tokens = $this->getTokens($tokenInput);
-        $tokenTypes = array_map(function($token) { return $token->getType(); }, $tokens);
 
-        $this->assertEquals(5, count($tokenTypes));
-        $this->assertEquals("DEFINE", $tokenTypes[1]);
+        $this->assertEquals(5, count($tokens));
+        $this->assertTrue($tokens[1]->matchesType("DEFINE"));
 
     }
 

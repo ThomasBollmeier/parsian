@@ -34,6 +34,7 @@ class TokenInputImpl implements TokenInput
     private $terminals;
     private $keywords;
     private $caseSensitive;
+    private $multTypesPerToken;
 
     const MODE_NORMAL = 1;
     const MODE_COMMENT = 2;
@@ -55,6 +56,7 @@ class TokenInputImpl implements TokenInput
         $this->terminals = $config->terminals;
         $this->keywords = $config->keywords;
         $this->caseSensitive = $config->caseSensitive;
+        $this->multTypesPerToken = $config->multTypesPerToken;
 
     }
 
@@ -235,7 +237,7 @@ class TokenInputImpl implements TokenInput
 
         // Search for keywords:
         foreach ($this->keywords as $keyword) {
-            $this->replaceByKeyword($keyword, $tokenizerData);
+            $this->addKeywordTypes($keyword, $tokenizerData);
         }
 
         return array_map(function($data) {
@@ -265,19 +267,13 @@ class TokenInputImpl implements TokenInput
         $first = $charInfos[0];
         $last = $charInfos[count($charInfos) - 1];
 
-        return new Token($content, $type, $first->pos, $last->pos);
+        return new Token($content, [$type], $first->pos, $last->pos);
 
     }
 
     private function getContent($charInfos)
     {
         $content = "";
-
-        /*
-        if (!is_array($charInfos)) {
-            var_dump($charInfos);
-        }
-        */
 
         foreach ($charInfos as $cinfo) {
             $content .= $cinfo->ch;
@@ -375,32 +371,18 @@ class TokenInputImpl implements TokenInput
         return $consumed;
     }
 
-    private function getKeywordType(string $content)
-    {
-
-        foreach ($this->keywords as $kw) {
-
-            $matched = $this->caseSensitive ?
-                $kw === $content :
-                strtoupper($kw) === strtoupper($content);
-
-            if ($matched) {
-                return strtoupper($kw);
-            }
-
-        }
-
-        return null;
-    }
-
     private function tokenizeAll($pattern, $type, $tokenizerData)
     {
         $res = [];
 
         foreach ($tokenizerData as $data) {
 
-            if ($data["token"] !== null) {
+            $token = $data["token"];
+            if ($token !== null) {
                 $res[] = $data;
+                if ($this->multTypesPerToken && preg_match($pattern, $token->getContent())) {
+                    $token->addType($type);
+                }
                 continue;
             }
 
@@ -459,7 +441,7 @@ class TokenInputImpl implements TokenInput
         return "/{$pattern}/";
     }
 
-    private function replaceByKeyword($keyword, &$tokenizerData)
+    private function addKeywordTypes($keyword, &$tokenizerData)
     {
         $value = $this->caseSensitive ? $keyword : strtoupper($keyword);
         $type = strtoupper($keyword);
@@ -475,8 +457,12 @@ class TokenInputImpl implements TokenInput
                     $content = strtoupper($content);
                 }
                 if ($content === $value) {
-                    $data["token"] = new Token($token->getContent(),
-                        $type, $token->getStartPos(), $token->getEndPos());
+                    if (!$this->multTypesPerToken) {
+                        $data["token"] = new Token($token->getContent(),
+                            [$type], $token->getStartPos(), $token->getEndPos());
+                    } else {
+                        $token->addType($type);
+                    }
                 }
 
             } else {
@@ -495,25 +481,5 @@ class TokenInputImpl implements TokenInput
         }
 
     }
-
-}
-
-interface Mode
-{
-
-}
-
-class NormalMode implements Mode
-{
-
-}
-
-class CommentMode implements Mode
-{
-
-}
-
-class StringMode implements Mode
-{
 
 }

@@ -28,12 +28,14 @@ class Token
         return $this->content;
     }
 
-    /**
-     * @return int
-     */
-    public function getType(): string
+    public function getTypes()
     {
-        return $this->type;
+        return array_keys($this->types);
+    }
+
+    public function matchesType($type)
+    {
+        return array_key_exists($type, $this->types);
     }
 
     /**
@@ -52,22 +54,31 @@ class Token
         return $this->endPos;
     }
 
+    public function addType($type)
+    {
+        $this->types[$type] = true;
+    }
+
     private $content;
-    private $type;
+    private $types;
     private $startPos;
     private $endPos;
 
-    public function __construct(string $content, string $type, Position $start, Position $end)
+    public function __construct(string $content, $types, Position $start, Position $end)
     {
         $this->content = $content;
-        $this->type = $type;
+        $this->types = [];
+        foreach ($types as $type) {
+            $this->types[$type] = true;
+        }
         $this->startPos = $start;
         $this->endPos = $end;
     }
 
     public function __toString()
     {
-        return "#{$this->type}: {$this->content}" .
+        $typesStr = "[" . implode(", ", array_keys($this->types)) . "]";
+        return "#{$typesStr}: {$this->content}" .
             " @ ({$this->startPos->line}, {$this->startPos->column})";
     }
 

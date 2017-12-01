@@ -66,7 +66,7 @@ class FileCharInput implements CharInput
     function nextChar() : string
     {
         $ch = fgetc($this->fp);
-        if ($ch !== PHP_EOL) {
+        if ($ch !== "\n") {
             $this->col += 1;
         } else {
             $this->col = 1;

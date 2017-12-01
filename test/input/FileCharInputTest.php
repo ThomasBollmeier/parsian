@@ -27,8 +27,12 @@ class FileCharInputTest extends TestCase
 
         $input->open();
 
-        for ($i=0; $i<5; $i++) {
-            $input->nextChar();
+        $ch = "";
+        while (true) {
+            $ch = $input->nextChar();
+            if ($ch === "\n") {
+                break;
+            }
         }
         $this->assertEquals(2, $input->line());
         $this->assertEquals(1, $input->column());

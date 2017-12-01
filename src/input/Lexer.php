@@ -29,6 +29,7 @@ class Lexer
     private $terminals;
     private $keywords;
     private $caseSensitive;
+    private $multTypesPerToken;
 
     public function __construct()
     {
@@ -40,6 +41,7 @@ class Lexer
         $this->terminals = [];
         $this->keywords = [];
         $this->caseSensitive = true;
+        $this->multTypesPerToken = false;
     }
 
     public function setWhitespace($wsChars)
@@ -51,6 +53,12 @@ class Lexer
     public function setCaseSensitive($caseSensitive=true)
     {
         $this->caseSensitive = $caseSensitive;
+        return $this;
+    }
+
+    public function enableMultipleTypesPerToken($enable = true)
+    {
+        $this->multTypesPerToken = $enable;
         return $this;
     }
 
@@ -128,6 +136,7 @@ class Lexer
         $config->terminals = $this->terminals;
         $config->keywords = $this->keywords;
         $config->caseSensitive = $this->caseSensitive;
+        $config->multTypesPerToken = $this->multTypesPerToken;
 
         return new TokenInputImpl($charIn, $config);
     }

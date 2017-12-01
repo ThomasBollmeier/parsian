@@ -29,24 +29,20 @@ class ParserTest extends TestCase
         $this->configGrammar($parser);
 
         $code = <<<CODE
-a and ( b or ~c )
+( a or b ) and ~c
 CODE;
 
         $ast = $parser->parseString($code);
 
-        self::assertNotFalse($ast);
+        self::assertTrue($ast !== false);
         print($ast->toXml() . PHP_EOL);
 
         $code = "a and or";
 
         $ast = $parser->parseString($code);
 
-        self::assertFalse($ast);
-
-        print ($parser->error() . PHP_EOL);
-
-
-        //print(($ast)->toXml());
+        self::assertTrue($ast !== false);
+        print ($ast->toXml() . PHP_EOL);
 
     }
 
