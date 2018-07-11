@@ -35,7 +35,7 @@ Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
 
 -- Lexical elements:
 
-comment '(*' '*)';
+comment '(*' '*)' enable_nesting;
 
 literal '"';
 

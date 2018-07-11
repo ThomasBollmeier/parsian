@@ -39,6 +39,7 @@ class Parser extends PParser
     const STRING = "STRING";
     const LITERAL = "LITERAL";
     const COMMENT = "COMMENT";
+    const ENABLE_NESTING = "ENABLE_NESTING";
     const TOKEN = "TOKEN";
     const SYMBOL = "SYMBOL";
     const ROOT = "ROOT";
@@ -95,6 +96,7 @@ class Parser extends PParser
         $lexer->addKeyword("root");
         $lexer->addKeyword("literal");
         $lexer->addKeyword("comment");
+        $lexer->addKeyword("enable_nesting");
         $lexer->addKeyword("token");
         $lexer->addKeyword("symbol");
         $lexer->addKeyword("name");
@@ -132,6 +134,7 @@ class Parser extends PParser
                 ->add($g->term(self::COMMENT))
                 ->add($g->term(self::STRING)) // <-- start chars
                 ->add($g->term(self::STRING)) // <-- end chars
+                ->add($g->opt($g->term(self::ENABLE_NESTING, "nesting")))
                 ->add($g->term(self::SEMICOLON)));
 
         $g->rule('literal_def',
@@ -423,6 +426,11 @@ class Parser extends PParser
 
             $res->addChild(new Ast('begin', $this->strip($children[1]->getText())));
             $res->addChild(new Ast('end', $this->strip($children[2]->getText())));
+
+            $nestingEnabled = $ast->getChildrenById("nesting");
+            if (!empty($nestingEnabled)) {
+                $res->addChild(new Ast('nesting_enabled'));
+            }
 
             return $res;
         });

@@ -129,6 +129,27 @@ CODE;
 
     }
 
+    public function testNestedComments()
+    {
+        $code = <<<CODE
+(* 
+this is a (*nested*) comment
+*)
+(define answer 42)
+CODE;
+
+        $lexer = $this->createLexer();
+        $tokenIn = $lexer->createTokenInput(new StringCharInput($code));
+
+        $tokens = $this->getTokens($tokenIn);
+        $this->assertNotEmpty($tokens);
+
+        foreach ($tokens as $token) {
+            printf("%s".PHP_EOL, $token);
+        }
+
+    }
+
     private function getTokens(TokenInput $tokenInput)
     {
         $tokens = [];
@@ -148,6 +169,7 @@ CODE;
         $lx = new Lexer();
 
         $lx->addCommentType("--", PHP_EOL);
+        $lx->addCommentType("(*", "*)", true);
         $lx->addStringType('"', '\"');
         $lx->addSymbol("(", "PAR_OPEN");
         $lx->addSymbol(")", "PAR_CLOSE");

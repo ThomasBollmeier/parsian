@@ -23,8 +23,11 @@ class TokenInputImpl implements TokenInput
     private $charIn;
     private $charInfoBuf;
     private $tokens;
+    private $startSeq;
     private $endSeq;
     private $escSeq;
+    private $nestedEnabled; // nested comment mode
+    private $nestLevel;
 
     private $bufSize;
     private $wsChars;
@@ -45,6 +48,7 @@ class TokenInputImpl implements TokenInput
         $this->charIn = $charIn;
         $this->charInfoBuf = [];
         $this->tokens = [];
+        $this->startSeq = null;
         $this->endSeq = null;
         $this->escSeq = null;
 
@@ -125,9 +129,11 @@ class TokenInputImpl implements TokenInput
                         $this->addToTokens($charInfos);
 
                         $mode = self::MODE_COMMENT;
-                        list($startSeq, $this->endSeq) = $checkResult;
+                        list($this->startSeq, $this->endSeq, $this->nestedEnabled) =
+                            $checkResult;
                         $this->escSeq = null;
-                        $this->consume(strlen($startSeq));
+                        $this->nestLevel = $this->nestedEnabled ? 1 : 0;
+                        $this->consume(strlen($this->startSeq));
 
                     } else {
 
@@ -163,10 +169,24 @@ class TokenInputImpl implements TokenInput
                     if ($this->startsWith($content, $this->endSeq)) {
 
                         $this->consume(strlen($this->endSeq));
-                        $mode = self::MODE_NORMAL;
-                        $this->endSeq = null;
+                        if ($this->nestedEnabled) {
+                            $this->nestLevel--;
+                        }
+                        if (!$this->nestedEnabled || $this->nestLevel === 0) {
+                            $mode = self::MODE_NORMAL;
+                            $this->startSeq = null;
+                            $this->endSeq = null;
+                            $this->nestedEnabled = false;
+                        }
 
-                    } else {
+                    } else if ($this->nestedEnabled &&
+                        $this->startsWith($content, $this->startSeq)) {
+
+                        $this->nestLevel++;
+                        $this->consume(strlen($this->startSeq));
+
+                    }
+                    else {
                         $this->consume(1);
                     }
                     break;
@@ -285,9 +305,9 @@ class TokenInputImpl implements TokenInput
     private function checkForComment(string $content)
     {
         foreach ($this->commentTypes as $commentType) {
-            list($startSeq, $endSeq) = $commentType;
+            list($startSeq, $endSeq, $nestedMode) = $commentType;
             if ($this->startsWith($content, $startSeq)) {
-                return [$startSeq, $endSeq];
+                return [$startSeq, $endSeq, $nestedMode];
             }
         }
 

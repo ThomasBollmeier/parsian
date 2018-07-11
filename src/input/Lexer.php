@@ -62,9 +62,11 @@ class Lexer
         return $this;
     }
 
-    public function addCommentType(string $startSeq, string $endSeq)
+    public function addCommentType(string $startSeq,
+                                   string $endSeq,
+                                   bool $enableNested = false)
     {
-        $this->commentTypes[] = [$startSeq, $endSeq];
+        $this->commentTypes[] = [$startSeq, $endSeq, $enableNested];
         $this->adjustBufSize($startSeq);
         $this->adjustBufSize($endSeq);
         return $this;

@@ -129,7 +129,8 @@ COMMENT;
             case "comment_def":
                 $data = [
                     "begin" => "",
-                    "end" => ""
+                    "end" => "",
+                    "nestingEnabled" => false
                 ];
                 break;
             case "literal_def":
@@ -188,6 +189,10 @@ COMMENT;
             case "delim":
             case "esc":
                 $data = $ast->getText();
+                break;
+
+            case "nesting_enabled":
+                $data = true;
                 break;
 
             case "transformed_node":
@@ -262,6 +267,9 @@ COMMENT;
             case "delim":
             case "esc":
                 $this->setContainerComponent($name, $data);
+                break;
+            case "nesting_enabled":
+                $this->setContainerComponent('nestingEnabled', $data);
                 break;
 
             default:
@@ -351,7 +359,12 @@ COMMENT;
         foreach ($this->content["comments"] as $comment) {
             $begin = $this->quoteEsc($comment["begin"]);
             $end = $this->quoteEsc($comment["end"]);
-            $line = "\$lexer->addCommentType(\"{$begin}\", \"{$end}\");";
+            $nestingEnabled = $comment["nestingEnabled"];
+            if (!$nestingEnabled) {
+                $line = "\$lexer->addCommentType(\"{$begin}\", \"{$end}\");";
+            } else {
+                $line = "\$lexer->addCommentType(\"{$begin}\", \"{$end}\", true);";
+            }
             $this->writeln($line);
         }
         $this->writeln();
