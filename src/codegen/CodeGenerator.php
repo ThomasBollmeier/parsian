@@ -321,6 +321,10 @@ COMMENT;
 
     private function createAltName() : string
     {
+        list($withinRuleDef, $ruleName) = $this->checkForRuleDefContext();
+        if ($withinRuleDef) {
+            return $ruleName;
+        }
         $id = $this->nextAltId;
         $this->nextAltId++;
         return "alt_{$id}";
@@ -328,6 +332,10 @@ COMMENT;
 
     private function createSeqName() : string
     {
+        list($withinRuleDef, $ruleName) = $this->checkForRuleDefContext();
+        if ($withinRuleDef) {
+            return $ruleName;
+        }
         $id = $this->nextSeqId;
         $this->nextSeqId++;
         return "seq_{$id}";
@@ -607,6 +615,18 @@ COMMENT;
     public function dedent()
     {
         $this->page->dedent();
+    }
+
+    private function checkForRuleDefContext()
+    {
+        $size = count($this->elemStack);
+        if ($size === 0) return [false, null];
+
+        list($name, $data) = $this->elemStack[$size-1];
+
+        return ($name === "rule_def") ?
+            [true, $data["name"]] :
+            [false, null];
     }
 
 }
