@@ -77,7 +77,7 @@ GRAMMAR;
         self::assertNotFalse($ast, $parser->error());
 
         $generator = new CodeGenerator("DemoParser");
-
+        $generator->setHeaderCommentFile("demo_license.txt");
         $generator->generate($ast);
 
     }

@@ -90,6 +90,8 @@ Available options:
     -o<parser_file>, --out=<parser_file>
         write output to <parser_file>
         
+    -c<comment_file> --comment-file=<comment_file>
+        
     -h, --help: 
         show this info
 
@@ -98,8 +100,8 @@ HELP;
     print($help);
 }
 
-$short = "p:n:o:h";
-$long = ["parser:", "namespace:", "out:", "help"];
+$short = "p:n:o:c:h";
+$long = ["parser:", "namespace:", "out:", "comment-file:", "help"];
 $options = getopt($short, $long);
 $args = argsWithoutOptions($argv);
 
@@ -112,13 +114,14 @@ if ($help !== "nohelp") {
 $parserName = getOptValue($options, "p", "parser", "MyParser");
 $namespace = getOptValue($options, "n", "namespace", "");
 $parserFile = getOptValue($options, "o", "out", "");
+$commentFile = getOptValue($options, "c", "comment-file", "");
 
 $grammarPath = empty($args) ? "" : $args[0];
 
 $output = empty($parserFile) ? null : new FileOutput($parserFile);
 
 list($result, $error) = Api::generateParserFromGrammar(
-        $grammarPath, $parserName, $namespace, $output);
+        $grammarPath, $parserName, $namespace, $output, $commentFile);
 
 if (!$result) {
     print($error);

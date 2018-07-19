@@ -1,0 +1,5 @@
+/***** DEMO-LICENSE
+* This source may be used at your own risk
+*
+* Thomas Bollmeier <entwickler@tbollmeier.de> 2018-
+*/

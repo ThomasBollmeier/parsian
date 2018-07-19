@@ -29,13 +29,15 @@ class Api
      * @param string $parserName name of parser class
      * @param string $namespace namespace of parser class
      * @param Output $output output to be written to
+     * @param string $pathToHeaderComment path to file that contains header comment
      * @return mixed[] [true, ""] in case of success, [false, <error_message>] in error cases
      */
     static function generateParserFromGrammar(
         string $grammarFilePath,
         string $parserName="MyParser",
         string $namespace="",
-        Output $output=null)
+        Output $output=null,
+        string $pathToHeaderComment="")
     {
         $parser = new MetaGrammarParser();
 
@@ -46,6 +48,7 @@ class Api
         if ($ast !== false) {
 
             $generator = new CodeGenerator($parserName, $namespace);
+            $generator->setHeaderCommentFile($pathToHeaderComment);
             $generator->generate($ast, $output);
 
             return [true, ""];
