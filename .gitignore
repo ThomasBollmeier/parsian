@@ -4,3 +4,4 @@ vendor
 /nbproject/private/nbproject/
 nbproject/
 composer.phar
+test/codegen/DemoParser.php

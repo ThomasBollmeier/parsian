@@ -105,6 +105,7 @@ dict -> PAR_OPEN key_value* PAR_CLOSE => {
 
 key_value -> key#IDENT value#expr => {
     :name "entry"
+    :attrs [{:key "name" :value #key.text}]
     :children [{:name "key" :text #key.text } #value]
 };
 

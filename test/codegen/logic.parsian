@@ -1,6 +1,6 @@
 (*
 Logical expression grammar
-Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
+Author: Thomas Bollmeier 2017-2019 <developer@thomas-bollmeier.de>
 *)
 
 -- Lexical elements:
@@ -22,4 +22,10 @@ disj -> conj ( 'or' conj )*;
 
 conj -> expr ( 'and' expr )*;
 
-expr -> neg#NOT? ( content#IDENT | PAR_OPEN content#disj PAR_CLOSE );
+expr -> neg#NOT? ( content#identifier | PAR_OPEN content#disj PAR_CLOSE );
+
+identifier -> IDENT =>
+{
+    :name "id"
+    :attrs [{:key "name" :value child.text}]
+};

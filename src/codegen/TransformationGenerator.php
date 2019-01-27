@@ -95,7 +95,7 @@ class TransformationGenerator
             foreach ($attrsNode->getChildren() as $attrNode) {
                 $children = $attrNode->getChildren();
                 $key = $children[0]->getText();
-                $val = $children[1]->getText();
+                $val = $this->getSimpleVarExpr($children[1]);
                 $page->writeln("{$varName}->setAttr($key, $val);");
             }
         }

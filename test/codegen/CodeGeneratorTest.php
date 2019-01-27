@@ -17,6 +17,7 @@ limitations under the License.
 
 use PHPUnit\Framework\TestCase;
 
+use tbollmeier\parsian\codegen\FileOutput;
 use tbollmeier\parsian\metagrammar\Parser;
 use tbollmeier\parsian\codegen\CodeGenerator;
 //use tbollmeier\parsian\codegen\StdOutput;
@@ -94,6 +95,20 @@ GRAMMAR;
         $generator = new CodeGenerator("DemoParser");
 
         $generator->generate($ast);
+
+        $output = new FileOutput("DemoParser.php");
+        $generator->generate($ast, $output);
+
+        require __DIR__ . "/DemoParser.php";
+        $demoParser = new \DemoParser();
+
+        $code =<<<CODE
+(a or b) and ~c
+CODE;
+        $ast = $demoParser->parseString($code);
+        self::assertNotFalse($ast, $demoParser->error());
+
+        print($ast->toXml());
 
     }
 

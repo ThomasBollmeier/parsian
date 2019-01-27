@@ -331,13 +331,15 @@ class Parser extends PParser
                 ->add($g->term(self::STRING, 'key'))
                 ->add($g->term(self::COLON))
                 ->add($g->term(self::KEY_VALUE))
-                ->add($g->term(self::STRING, 'value'))
+                ->add($g->ruleRef('trans_simple_val', 'value'))
                 ->add($g->term(self::BRACE_CLOSE)));
 
         $g->setCustomRuleAst('trans_attr', function (Ast $ast) {
             $res = new Ast("attr");
             $res->addChild(new Ast("key", $ast->getChildrenById("key")[0]->getText()));
-            $res->addChild(new Ast("value", $ast->getChildrenById("value")[0]->getText()));
+            $value = $ast->getChildrenById('value')[0];
+            $value->clearId();
+            $res->addChild($value);
             return $res;
         });
 
