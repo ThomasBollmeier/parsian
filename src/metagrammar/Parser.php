@@ -57,6 +57,7 @@ class Parser extends PParser
     const COLON = "COLON";
     const CHILD = "CHILD";
     const DOT = "DOT";
+    const AS = "AS";
 
 
     public function __construct()
@@ -106,6 +107,7 @@ class Parser extends PParser
         $lexer->addKeyword("child");
         $lexer->addKeyword("key");
         $lexer->addKeyword("value");
+        $lexer->addKeyword("as");
 
         $lexer->addTerminal("/[A-Z][A-Z0-9_]*/", self::TOKEN_ID);
         $lexer->addTerminal("/[a-z][a-z0-9_]*/", self::ID);
@@ -142,6 +144,9 @@ class Parser extends PParser
                 ->add($g->term(self::LITERAL))
                 ->add($g->term(self::STRING)) // <-- delimiter
                 ->add($g->opt($g->term(self::STRING, 'esc'))) // <-- escape chars
+                ->add($g->opt($g->seq()
+                    ->add($g->term(self::AS))
+                    ->add($g->term(self::TOKEN_ID, "token_id"))))
                 ->add($g->term(self::SEMICOLON)));
 
         $g->rule('symbol_def',
@@ -441,6 +446,10 @@ class Parser extends PParser
         {
             $res = new Ast('literal_def');
             $children = $ast->getChildren();
+
+            $id = $ast->getChildrenById('token_id');
+            $id = !empty($id) ? $id[0]->getText() : "STRING";
+            $res->addChild(new Ast("name", $id));
 
             $res->addChild(new Ast('delim', $this->strip($children[1]->getText())));
             if (!empty($ast->getChildrenById('esc'))) {

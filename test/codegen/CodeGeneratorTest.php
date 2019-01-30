@@ -103,6 +103,9 @@ GRAMMAR;
         $demoParser = new \DemoParser();
 
         $code =<<<CODE
+"""
+This is a documentation.
+"""
 (a or b) and ~c
 CODE;
         $ast = $demoParser->parseString($code);

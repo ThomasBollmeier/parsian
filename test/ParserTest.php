@@ -41,7 +41,7 @@ CODE;
 
         $ast = $parser->parseString($code);
 
-        self::assertTrue($ast !== false);
+        self::assertTrue($ast !== false, $parser->error());
         print ($ast->toXml() . PHP_EOL);
 
     }
@@ -133,6 +133,7 @@ CODE;
     private function configLexer(Parser $parser)
     {
         $lexer = $parser->getLexer();
+        $lexer->enableMultipleTypesPerToken();
         $lexer->addKeyword("or");
         $lexer->addKeyword("and");
         $lexer->addSymbol("(", "PAR_OPEN");

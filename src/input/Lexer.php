@@ -72,9 +72,11 @@ class Lexer
         return $this;
     }
 
-    public function addStringType(string $delimSeq, string $escSeq=null)
+    public function addStringType(string $delimSeq,
+                                  string $escSeq = null,
+                                  string $name = "STRING")
     {
-        $this->stringTypes[] = [$delimSeq, $escSeq];
+        $this->stringTypes[] = [$delimSeq, $escSeq, $name];
         $this->adjustBufSize($delimSeq);
         if ($escSeq !== null) {
             $this->adjustBufSize($escSeq);

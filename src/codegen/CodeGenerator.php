@@ -148,6 +148,7 @@ COMMENT;
                 break;
             case "literal_def":
                 $data = [
+                    "name" => "",
                     "delim" => "",
                     "esc" => null
                 ];
@@ -391,12 +392,13 @@ COMMENT;
         $this->writeln();
 
         foreach ($this->content["literals"] as $lit) {
+            $tokenId = $lit["name"];
             $delim = $this->quoteEsc($lit["delim"]);
             if (isset($lit["esc"])) {
                 $esc = $this->quoteEsc($lit["esc"]);
-                $line = "\$lexer->addStringType(\"{$delim}\", \"{$esc}\");";
+                $line = "\$lexer->addStringType(\"{$delim}\", \"{$esc}\", \"{$tokenId}\");";
             } else {
-                $line = "\$lexer->addStringType(\"{$delim}\");";
+                $line = "\$lexer->addStringType(\"{$delim}\", null, \"{$tokenId}\");";
             }
             $this->writeln($line);
         }

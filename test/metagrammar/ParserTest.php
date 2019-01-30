@@ -35,6 +35,7 @@ Author: Thomas Bollmeier 2017 <entwickler@tbollmeier.de>
 comment '(*' '*)';
 
 literal '"';
+literal '"""' '@' as DOCSTRING;
 
 symbol PAR_OPEN '(';
 symbol PAR_CLOSE ')';
@@ -58,7 +59,7 @@ GRAMMAR;
         $ast = $parser->parseString($grammar);
         self::assertNotFalse($ast, $parser->error());
 
-        //print ($ast->toXml());
+        print ($ast->toXml());
 
     }
     

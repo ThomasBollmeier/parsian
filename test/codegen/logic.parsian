@@ -7,6 +7,7 @@ Author: Thomas Bollmeier 2017-2019 <developer@thomas-bollmeier.de>
 
 comment '(*' '*)';
 
+literal '"""' as DOCSTRING;
 literal '"';
 
 symbol PAR_OPEN '(';
@@ -18,7 +19,7 @@ token IDENT /[a-z]+/;
 -- Production rules
 
 @root
-disj -> conj ( 'or' conj )*;
+disj -> DOCSTRING? conj ( 'or' conj )*;
 
 conj -> expr ( 'and' expr )*;
 

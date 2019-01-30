@@ -100,6 +100,7 @@ class TokenInputImpl implements TokenInput
     {
         $charInfos = [];
         $mode = self::MODE_NORMAL;
+        $stringTokenName = "";
 
         $this->consumeWS();
 
@@ -144,7 +145,7 @@ class TokenInputImpl implements TokenInput
                             $this->addToTokens($charInfos);
 
                             $mode = self::MODE_STRING;
-                            list($this->endSeq, $this->escSeq) = $checkResult;
+                            list($this->endSeq, $this->escSeq, $stringTokenName) = $checkResult;
                             $charInfos = $this->consume(strlen($this->endSeq));
 
                         } else if ($this->isWSChar($content[0])) {
@@ -196,11 +197,12 @@ class TokenInputImpl implements TokenInput
                     if ($this->startsWith($content, $this->endSeq)) {
 
                         $charInfos = array_merge($charInfos, $this->consume(strlen($this->endSeq)));
-                        $this->tokens[] = $this->createToken($charInfos, "STRING");
+                        $this->tokens[] = $this->createToken($charInfos, $stringTokenName);
                         $charInfos = [];
                         $mode = self::MODE_NORMAL;
                         $this->endSeq = null;
                         $this->escSeq = null;
+                        $stringTokenName = "";
                         $done = true;
 
                     } elseif ($this->escSeq !== null && $this->startsWith($content, $this->escSeq)) {
@@ -317,9 +319,9 @@ class TokenInputImpl implements TokenInput
     private function checkForString(string $content)
     {
         foreach ($this->stringTypes as $stringType) {
-            list($delimSeq, $escSeq) = $stringType;
+            list($delimSeq, $escSeq, $name) = $stringType;
             if ($this->startsWith($content, $delimSeq)) {
-                return [$delimSeq, $escSeq];
+                return [$delimSeq, $escSeq, $name];
             }
         }
 
